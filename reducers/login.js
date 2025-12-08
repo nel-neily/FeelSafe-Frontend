@@ -1,24 +1,31 @@
 import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
-    value: { signin: [], signup: [], google: [], noaccount: [] },
+    signin: null,
+    signup: null,
+    google: false,
+    noaccount: false,
     };
 
 export const loginSlice = createSlice({
     name: 'login',
     initialState,
     reducers: {
+        // email, password
         addSignin: (state, action) => {
-            state.value.signin = action.payload;
+            state.signin = action.payload; 
         },
+        // email, password, confirmPassword
         addSignup: (state, action) => {
-            state.value.signup = action.payload;
+            state.signup = action.payload; 
         },
+        // true ou un token + user info plus tard
         addGoogle: (state, action) => {
-            state.value.google = action.payload;
+            state.google = action.payload; 
         },
+        // boolean
         addNoaccount: (state, action) => {
-            state.value.noaccount = action.payload;
+            state.noaccount = action.payload; 
         }
     },
 });

@@ -7,59 +7,165 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  View,
+  Modal,
 } from 'react-native';
 import { useDispatch } from 'react-redux';
-import { addSignin } from '../reducers/login';
-import { addSignup } from '../reducers/login';
-import { addGoogle } from '../reducers/login';
-import { addNoaccount } from '../reducers/login';
+import { addSignin, addSignup, addGoogle, addNoaccount } from '../reducers/login';
+import { useNavigation } from '@react-navigation/native';
+
 
 export default function LoginScreen() {
 
-    const dispatch = useDispatch();
-    const [signin, setSignin] = useState('');
-    const [signup, setSignup] = useState('');
-    const [google, setGoogle] = useState('');
-    const [noaccount, setNoaccount] = useState('');
-    
-    const handleSubmit = () => {
-        dispatch(addSignin(signin));
-        dispatch(addSignup(signup));
-        dispatch(addGoogle(google));
-        dispatch(addNoaccount(noaccount));
-    }
+    const navigation = useNavigation();
 
+    const dispatch = useDispatch();
+
+    // Modales
+    const [isSigninModal, setSigninModal] = useState(false);
+    const [isSignupModal, setSignupModal] = useState(false);
+    const [isGoogleModal, setGoogleModal] = useState(false);
+
+    // Champs
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
+
+    // Signin action
+  const handleSignin = () => {
+    dispatch(addSignin({ email, password }));
+    setSigninModal(false);
+    navigation.navigate("TabNavigator");
+  };
+  
+  // Signup action
+  const handleSignup = () => {
+    dispatch(addSignup({ email, password, confirmPassword }));
+    setSignupModal(false);
+  };
+
+  // Google action
+  const handleGoogle = () => {
+    dispatch(addGoogle(true));
+    setGoogleModal(false);
+  };
+
+  // No account
+  const handleNoAccount = () => {
+    dispatch(addNoaccount(true));
+    navigation.navigate("TabNavigator");
+  };
 
 return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <Image style={styles.image} source={require('../assets/logo-rond.png')} />
 
-      {/* Bouton Sign In */}
-      <TextInput placeholder="Signin" onChangeText={(value) => setSignin(value)} value={signin} style={styles.input} />
-      <TouchableOpacity onPress={() => handleSubmit()} style={styles.button} activeOpacity={0.8}>
+      {/* ----- BUTTONS ----- */}
+      <TouchableOpacity style={styles.button} onPress={() => setSigninModal(true)}>
         <Text style={styles.textButton}>Sign in</Text>
       </TouchableOpacity>
 
-      {/* Bouton Sign Up */}
-       <TextInput placeholder="Signup" onChangeText={(value) => setSignup(value)} value={signup} style={styles.input} />
-      <TouchableOpacity onPress={() => handleSubmit()} style={styles.button} activeOpacity={0.8}>
+      <TouchableOpacity style={styles.button} onPress={() => setSignupModal(true)}>
         <Text style={styles.textButton}>Sign up</Text>
       </TouchableOpacity>
 
-     {/* Bouton Google Sign In */}
-      <TextInput placeholder="GoogleSignin" onChangeText={(value) => setGoogle(value)} value={google} style={styles.input} />
-      <TouchableOpacity onPress={() => handleSubmit()} style={styles.button} activeOpacity={0.8}>
+      <TouchableOpacity style={styles.button} onPress={() => setGoogleModal(true)}>
         <Text style={styles.textButton}>Sign in with Google</Text>
       </TouchableOpacity>
 
-      {/* Lien NoAccount */}
-      <TextInput placeholder="NoAccount" onChangeText={(value) => setNoaccount(value)} value={noaccount} style={styles.input} />
-      <TouchableOpacity onPress={() => handleSubmit()} style={styles.button} activeOpacity={0.8}>
-        <Text style={styles.link}>Sign in without account</Text>
+      <TouchableOpacity onPress={handleNoAccount}>
+        <Text style={styles.link}>Continue without account</Text>
       </TouchableOpacity>
 
+     
+      {/* ------------------  SIGNIN MODAL ------------------ */}
+      <Modal visible={isSigninModal} transparent animationType="slide">
+        <View style={styles.modalWrapper}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalTitle}>Sign in</Text>
+
+            <TextInput
+              style={styles.input}
+              placeholder="Email"
+              onChangeText={setEmail}
+            />
+
+            <TextInput
+              style={styles.input}
+              placeholder="Password"
+              secureTextEntry
+              onChangeText={setPassword}
+            />
+
+            <TouchableOpacity style={styles.modalButton} onPress={handleSignin}>
+              <Text style={styles.textButton}>Validate</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => setSigninModal(false)}>
+              <Text style={styles.close}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+     
+      {/* ------------------  SIGNUP MODAL ------------------ */}
+      <Modal visible={isSignupModal} transparent animationType="slide">
+        <View style={styles.modalWrapper}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalTitle}>Sign up</Text>
+
+            <TextInput
+              style={styles.input}
+              placeholder="Email"
+              onChangeText={setEmail}
+            />
+
+            <TextInput
+              style={styles.input}
+              placeholder="Password"
+              secureTextEntry
+              onChangeText={setPassword}
+            />
+
+            <TextInput
+              style={styles.input}
+              placeholder="Confirm Password"
+              secureTextEntry
+              onChangeText={setConfirmPassword}
+            />
+
+            <TouchableOpacity style={styles.modalButton} onPress={handleSignup}>
+              <Text style={styles.textButton}>Create account</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => setSignupModal(false)}>
+              <Text style={styles.close}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+
+      {/* ------------------ GOOGLE MODAL ------------------- */}
+      <Modal visible={isGoogleModal} transparent animationType="fade">
+        <View style={styles.modalWrapper}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalTitle}>Google Login</Text>
+
+            <TouchableOpacity style={styles.modalButton} onPress={handleGoogle}>
+              <Text style={styles.textButton}>Connect with Google</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => setGoogleModal(false)}>
+              <Text style={styles.close}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
     </KeyboardAvoidingView>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -71,34 +177,66 @@ const styles = StyleSheet.create({
   },
   image: {
     width: '100%',
-    height: '50%',
-  },
-  input: {
-    width: '80%',
-    marginTop: 25,
-    borderBottomColor: '#ffffff',
-    borderBottomWidth: 1,
-    fontSize: 18,
+    height: '40%',
+    marginBottom: 50,
   },
   button: {
-    alignItems: 'center',
-    paddingTop: 8,
-    width: '80%',
-    marginTop: 30,
+    width: '70%',
+    padding: 12,
+    marginVertical: 10,
+    backgroundColor: '#ffffff33',
     borderRadius: 10,
-    marginBottom: 80,
+    alignItems: 'center',
   },
   textButton: {
-    color: '#ffffff',
-    height: 30,
-    fontWeight: '600',
+    color: '#fff',
     fontSize: 16,
+    fontWeight: '600',
   },
-    link: {
+  link: {
+    marginTop: 20,
     color: '#ffffff',
-    height: 30,
-    fontWeight: '600',
-    fontSize: 16,
     textDecorationLine: 'underline',
+    fontSize: 16,
   },
+
+  // --- Modals ---
+  modalWrapper: {
+    flex: 1,
+    backgroundColor: '#000000aa',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalBox: {
+    width: '85%',
+    backgroundColor: '#fff',
+    padding: 25,
+    borderRadius: 12,
+    alignItems: 'center',
+    gap: 10,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    marginBottom: 10,
+  },
+  input: {
+    width: '90%',
+    borderBottomWidth: 1,
+    paddingVertical: 8,
+    marginTop: 15,
+  },
+  modalButton: {
+    backgroundColor: '#4B3A43',
+    padding: 12,
+    borderRadius: 10,
+    marginTop: 20,
+    width: '80%',
+    alignItems: 'center',
+  },
+  close: {
+    marginTop: 15,
+    color: '#4B3A43',
+    fontWeight: '600',
+  }
 });
