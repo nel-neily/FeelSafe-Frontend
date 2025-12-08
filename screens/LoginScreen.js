@@ -65,19 +65,19 @@ return (
 
       {/* ----- BUTTONS ----- */}
       <TouchableOpacity style={styles.button} onPress={() => setSigninModal(true)}>
-        <Text style={styles.textButton}>Sign in</Text>
+        <Text style={styles.textButton}>Se connecter</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.button} onPress={() => setSignupModal(true)}>
-        <Text style={styles.textButton}>Sign up</Text>
+        <Text style={styles.textButton}>Créer un compte</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.button} onPress={() => setGoogleModal(true)}>
-        <Text style={styles.textButton}>Sign in with Google</Text>
+        <Text style={styles.textButton}>Se connecter avec Google</Text>
       </TouchableOpacity>
 
       <TouchableOpacity onPress={handleNoAccount}>
-        <Text style={styles.link}>Continue without account</Text>
+        <Text style={styles.link}>Continuer sans compte</Text>
       </TouchableOpacity>
 
      
@@ -85,7 +85,7 @@ return (
       <Modal visible={isSigninModal} transparent animationType="slide">
         <View style={styles.modalWrapper}>
           <View style={styles.modalBox}>
-            <Text style={styles.modalTitle}>Sign in</Text>
+            <Text style={styles.modalTitle}>Connexion</Text>
 
             <TextInput
               style={styles.input}
@@ -96,7 +96,7 @@ return (
 
             <TextInput
               style={styles.input}
-              placeholder="Password"
+              placeholder="Mot de passe"
               secureTextEntry={!showPassword}
               onChangeText={setPassword}
               autoCapitalize="none"
@@ -106,11 +106,11 @@ return (
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.modalButton} onPress={handleSignin}>
-              <Text style={styles.textButton}>Validate</Text>
+              <Text style={styles.textButton}>Valider</Text>
             </TouchableOpacity>
 
             <TouchableOpacity onPress={() => setSigninModal(false)}>
-              <Text style={styles.close}>Close</Text>
+              <Text style={styles.close}>Fermer</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -121,7 +121,7 @@ return (
       <Modal visible={isSignupModal} transparent animationType="slide">
         <View style={styles.modalWrapper}>
           <View style={styles.modalBox}>
-            <Text style={styles.modalTitle}>Sign up</Text>
+            <Text style={styles.modalTitle}>Inscription</Text>
 
             <TextInput
               style={styles.input}
@@ -132,7 +132,7 @@ return (
 
             <TextInput
               style={styles.input}
-              placeholder="Password"
+              placeholder="Mot de passe"
               secureTextEntry={!showPassword}
               onChangeText={setPassword}
               autoCapitalize="none"
@@ -143,7 +143,7 @@ return (
 
             <TextInput
               style={styles.input}
-              placeholder="Confirm Password"
+              placeholder="Confirmer le mot de passe"
               secureTextEntry={!showConfirmPassword}
               onChangeText={setConfirmPassword}
               autoCapitalize="none"
@@ -153,11 +153,11 @@ return (
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.modalButton} onPress={handleSignup}>
-              <Text style={styles.textButton}>Create account</Text>
+              <Text style={styles.textButton}>Créer un compte</Text>
             </TouchableOpacity>
 
             <TouchableOpacity onPress={() => setSignupModal(false)}>
-              <Text style={styles.close}>Close</Text>
+              <Text style={styles.close}>Fermer</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -168,14 +168,14 @@ return (
       <Modal visible={isGoogleModal} transparent animationType="fade">
         <View style={styles.modalWrapper}>
           <View style={styles.modalBox}>
-            <Text style={styles.modalTitle}>Google Login</Text>
+            <Text style={styles.modalTitle}>Continuer avec Google</Text>
 
             <TouchableOpacity style={styles.modalButton} onPress={handleGoogle}>
-              <Text style={styles.textButton}>Connect with Google</Text>
+              <Text style={styles.textButton}>Se connecter avec Google</Text>
             </TouchableOpacity>
 
             <TouchableOpacity onPress={() => setGoogleModal(false)}>
-              <Text style={styles.close}>Close</Text>
+              <Text style={styles.close}>Fermer</Text>
             </TouchableOpacity>
           </View>
         </View>
