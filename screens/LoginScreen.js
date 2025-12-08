@@ -16,18 +16,20 @@ import { useNavigation } from '@react-navigation/native';
 import FontAwesome from "react-native-vector-icons/FontAwesome";
 import { Alert } from 'react-native';
 
+const BACKEND_URL = process.env.BACKEND_URL;
+
 
 export default function LoginScreen() {
 
     const navigation = useNavigation();
     const dispatch = useDispatch();
 
-    // Modales
+    // Modals
     const [isSigninModal, setSigninModal] = useState(false);
     const [isSignupModal, setSignupModal] = useState(false);
     const [isGoogleModal, setGoogleModal] = useState(false);
 
-    // Champs
+    // Fields
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
@@ -43,8 +45,9 @@ export default function LoginScreen() {
 
 };
     // SIGNIN ACTION
-  const handleSignin = () => {
+  const handleSignin = async () => {
 
+    try {
     // Regex to validate the email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -57,7 +60,21 @@ export default function LoginScreen() {
       Alerte("Veuillez saisir une adresse mail valide.");
       return;
     }
-      dispatch(addSignin({ email, password }));
+  
+
+  // Call backend 
+
+
+  const response = await fetch(`${BACKEND_URL}/users/signin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+
+    const data = await response.json();
+
+    if (data.token) {
+      dispatch(addSignin({ email, token: data.token }));
 
       // Empty fields after signin
       setEmail("");
@@ -65,11 +82,20 @@ export default function LoginScreen() {
 
       setSigninModal(false);
       navigation.navigate("TabNavigator", { screen: "MapScreen" });
-    };
+    } else {
+      Alerte("Email ou mot de passe incorrect");
+          }
+        }
+   catch (error) {
+    console.error(error);
+    Alerte("Erreur lors de la connexion");
+  }
+  };
   
   // SIGNUP ACTION
-  const handleSignup = () => {
+  const handleSignup  = async () => {
 
+    try {
     // Regex to validate the email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -93,6 +119,18 @@ export default function LoginScreen() {
       return;
     }
 
+    // Call backend 
+
+    const response = await fetch(`${BACKEND_URL}/users/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+
+    const data = await response.json();
+
+    if (data.token) {
+
 
     dispatch(addSignup({ email, password, confirmPassword }));
 
@@ -103,7 +141,16 @@ export default function LoginScreen() {
 
     setSignupModal(false);
     navigation.navigate("TabNavigator", { screen: "Map" });
+    } else {
+      Alerte("Email ou mot de passe incorrect");
+          }
+        }
+   catch (error) {
+    console.error(error);
+    Alerte("Erreur lors de la connexion");
+  }
   };
+
 
   // GOOGLE ACTION
   const handleGoogle = () => {
@@ -182,15 +229,15 @@ return (
         <Text style={styles.textButton}>Valider</Text>
       </TouchableOpacity> */}
 
-      {/* Hide the Signin button color until all inputs are validated */}
-
       <TouchableOpacity
         style={{
           ...styles.modalButton,
           backgroundColor: email && password ? '#4B3A43' : '#888', // gris si vide
         }}
         onPress={handleSignin}
-        disabled={!email || !password} // bouton désactivé si un champ est vide
+
+        // Hide the Signin button color until all fields are completed
+        disabled={!email || !password} 
       >
         <Text style={styles.textButton}>Valider</Text>
       </TouchableOpacity>
@@ -269,14 +316,14 @@ return (
               <Text style={styles.textButton}>Créer un compte</Text>
             </TouchableOpacity> */}
 
-            {/* Hide the Signup button color until all inputs are validated */}
-
             <TouchableOpacity
               style={{
                 ...styles.modalButton,
                 backgroundColor: email && password && confirmPassword ? '#4B3A43' : '#888',
               }}
               onPress={handleSignup}
+
+              // Hide the Signup button color until all fields are completed
               disabled={!email || !password || !confirmPassword}
             >
               <Text style={styles.textButton}>Créer un compte</Text>
