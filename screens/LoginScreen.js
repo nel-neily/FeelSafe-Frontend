@@ -42,7 +42,7 @@ export default function LoginScreen() {
 
 
 };
-    // Signin action
+    // SIGNIN ACTION
   const handleSignin = () => {
 
     // Regex pour valider le format email
@@ -62,7 +62,7 @@ export default function LoginScreen() {
       navigation.navigate("TabNavigator", { screen: "MapScreen" });
     };
   
-  // Signup action
+  // SIGNUP ACTION
   const handleSignup = () => {
 
     // Regex pour valider le format email
@@ -94,14 +94,14 @@ export default function LoginScreen() {
     navigation.navigate("TabNavigator", { screen: "Map" });
   };
 
-  // Google action
+  // GOOGLE ACTION
   const handleGoogle = () => {
     dispatch(addGoogle(true));
     setGoogleModal(false);
     navigation.navigate("TabNavigator", { screen: "Map" });
   };
 
-  // No account
+  // NO ACCOUNT ACTION
   const handleNoAccount = () => {
     dispatch(addNoaccount(true));
     navigation.navigate("TabNavigator", { screen: "Map" });
@@ -129,7 +129,7 @@ return (
       </TouchableOpacity>
 
      
-      {/* ------------------  SIGNIN MODAL ------------------ */}
+      {/* ---  SIGNIN MODAL --- */}
       <Modal visible={isSigninModal} transparent animationType="slide">
         <View style={styles.modalWrapper}>
           <View style={styles.modalBox}>
@@ -167,9 +167,23 @@ return (
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity style={styles.modalButton} onPress={handleSignin}>
+      {/* <TouchableOpacity style={styles.modalButton} onPress={handleSignin}>
+        <Text style={styles.textButton}>Valider</Text>
+      </TouchableOpacity> */}
+
+      {/* Mask the Signin button until all inputs are validated */}
+
+      <TouchableOpacity
+        style={{
+          ...styles.modalButton,
+          backgroundColor: email && password ? '#4B3A43' : '#888', // gris si vide
+        }}
+        onPress={handleSignin}
+        disabled={!email || !password} // bouton désactivé si un champ est vide
+      >
         <Text style={styles.textButton}>Valider</Text>
       </TouchableOpacity>
+
 
       <TouchableOpacity onPress={() => setSigninModal(false)}>
         <Text style={styles.close}>Fermer</Text>
@@ -180,7 +194,7 @@ return (
       </Modal>
 
      
-      {/* ------------------  SIGNUP MODAL ------------------ */}
+      {/* --- SIGNUP MODAL --- */}
       <Modal visible={isSignupModal} transparent animationType="slide">
         <View style={styles.modalWrapper}>
           <View style={styles.modalBox}>
@@ -240,9 +254,23 @@ return (
             </TouchableOpacity>
           </View>
 
-            <TouchableOpacity style={styles.modalButton} onPress={handleSignup}>
+            {/* <TouchableOpacity style={styles.modalButton} onPress={handleSignup}>
+              <Text style={styles.textButton}>Créer un compte</Text>
+            </TouchableOpacity> */}
+
+            {/* Mask the Signup button until all inputs are validated */}
+
+            <TouchableOpacity
+              style={{
+                ...styles.modalButton,
+                backgroundColor: email && password && confirmPassword ? '#4B3A43' : '#888',
+              }}
+              onPress={handleSignup}
+              disabled={!email || !password || !confirmPassword}
+            >
               <Text style={styles.textButton}>Créer un compte</Text>
             </TouchableOpacity>
+
 
             <TouchableOpacity onPress={() => setSignupModal(false)}>
               <Text style={styles.close}>Fermer</Text>
@@ -253,7 +281,7 @@ return (
       </Modal>
 
 
-      {/* ------------------ GOOGLE MODAL ------------------- */}
+      {/* --- GOOGLE MODAL --- */}
       <Modal visible={isGoogleModal} transparent animationType="fade">
         <View style={styles.modalWrapper}>
           <View style={styles.modalBox}>
