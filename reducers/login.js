@@ -1,7 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
-    value: { signin: [], signup: [], google: [] },
+    value: { signin: [], signup: [], google: [], noaccount: [] },
     };
 
 export const loginSlice = createSlice({
@@ -17,8 +17,11 @@ export const loginSlice = createSlice({
         addGoogle: (state, action) => {
             state.value.google = action.payload;
         },
+        addNoaccount: (state, action) => {
+            state.value.noaccount = action.payload;
+        }
     },
 });
 
-export const { addSignin, addSignup, addGoogle } = loginSlice.actions;
+export const { addSignin, addSignup, addGoogle, addNoaccount } = loginSlice.actions;
 export default loginSlice.reducer;
