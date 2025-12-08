@@ -39,25 +39,27 @@ export default function LoginScreen() {
   const handleSignin = () => {
     dispatch(addSignin({ email, password }));
     setSigninModal(false);
-    navigation.navigate("TabNavigator");
+    navigation.navigate("TabNavigator", { screen: "MapScreen" });
   };
   
   // Signup action
   const handleSignup = () => {
     dispatch(addSignup({ email, password, confirmPassword }));
     setSignupModal(false);
+    navigation.navigate("TabNavigator", { screen: "Map" });
   };
 
   // Google action
   const handleGoogle = () => {
     dispatch(addGoogle(true));
     setGoogleModal(false);
+    navigation.navigate("TabNavigator", { screen: "Map" });
   };
 
   // No account
   const handleNoAccount = () => {
     dispatch(addNoaccount(true));
-    navigation.navigate("TabNavigator");
+    navigation.navigate("TabNavigator", { screen: "Map" });
   };
 
 return (
@@ -88,46 +90,48 @@ return (
           <View style={styles.modalBox}>
             <Text style={styles.modalTitle}>Connexion</Text>
 
+            {/* EMAIL */}
             <TextInput
               style={styles.input}
               placeholder="Email"
-              onChangeText={setEmail}
+              onChangeText={(value) => setEmail(value)}
+              value={email}
               autoCapitalize="none"
             />
 
-            <TextInput
-              style={styles.input}
-              placeholder="Mot de passe"
-              secureTextEntry={!showPassword}
-              onChangeText={setPassword}
-              autoCapitalize="none"
-            />
-            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-              <Text style={styles.showHide}>{showPassword ? "Hide" : "Show"}</Text>
-            </TouchableOpacity>
+            {/* PASSWORD */}
+            <View style={{ width: '90%', marginTop: 15, position: 'relative' }}>
+           <TextInput
+             style={{ ...styles.input, paddingRight: 40 }} // espace pour l'icône
+             placeholder="Mot de passe"
+             secureTextEntry={!showPassword}
+             onChangeText={setPassword}
+             autoCapitalize="none"
+             value={password}
+        />
+        {/* HIDE/SHOW PASSWORD ICON */}
+        <TouchableOpacity
+          style={{ position: 'absolute', right: 10, top: 12 }}
+          onPress={() => setShowPassword(!showPassword)}
+        >
+          <FontAwesome
+            name={showPassword ? "eye-slash" : "eye"}
+            size={20}
+            color="#4B3A43"
+          />
+        </TouchableOpacity>
+      </View>
 
-            <TouchableOpacity style={styles.modalButton} onPress={handleSignin}>
-              <Text style={styles.textButton}>Valider</Text>
-            </TouchableOpacity>
+      <TouchableOpacity style={styles.modalButton} onPress={handleSignin}>
+        <Text style={styles.textButton}>Valider</Text>
+      </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => setSigninModal(false)}>
-              <Text style={styles.close}>Fermer</Text>
-            </TouchableOpacity>
+      <TouchableOpacity onPress={() => setSigninModal(false)}>
+        <Text style={styles.close}>Fermer</Text>
+      </TouchableOpacity>
 
-            {/* HIDE/SHOW PASSWORD ICON */}
-
-            <TouchableOpacity
-              style={{ position: 'absolute', right: 10, top: 12 }}
-              onPress={() => setShowPassword(!showPassword)}
-             >
-            <FontAwesome
-              name={showPassword ? "eye-slash" : "eye"}
-              size={20}
-              color="#4B3A43"
-            />
-           </TouchableOpacity>
-          </View>
-        </View>
+    </View>
+  </View>
       </Modal>
 
      
@@ -137,6 +141,7 @@ return (
           <View style={styles.modalBox}>
             <Text style={styles.modalTitle}>Inscription</Text>
 
+            {/* EMAIL */}
             <TextInput
               style={styles.input}
               placeholder="Email"
@@ -144,27 +149,51 @@ return (
               autoCapitalize="none"
             />
 
+            {/* PASSWORD */}
+            <View style={{ width: '90%', marginTop: 15, position: 'relative' }}>
             <TextInput
-              style={styles.input}
+              style={{ ...styles.input, paddingRight: 40 }}
               placeholder="Mot de passe"
               secureTextEntry={!showPassword}
               onChangeText={setPassword}
               autoCapitalize="none"
+              value={password}
             />
-            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-              <Text style={styles.showHide}>{showPassword ? "Hide" : "Show"}</Text>
+            <TouchableOpacity
+              style={{ position: 'absolute', right: 10, top: 12 }}
+              onPress={() => setShowPassword(!showPassword)}
+            >
+              <FontAwesome
+                name={showPassword ? "eye-slash" : "eye"}
+                size={20}
+                color="#4B3A43"
+              />
             </TouchableOpacity>
+          </View>
 
+
+            {/* CONFIRM PASSWORD */}
+            <View style={{ width: '90%', marginTop: 15, position: 'relative' }}>
             <TextInput
-              style={styles.input}
+              style={{ ...styles.input, paddingRight: 40 }}
               placeholder="Confirmer le mot de passe"
               secureTextEntry={!showConfirmPassword}
               onChangeText={setConfirmPassword}
               autoCapitalize="none"
+              value={confirmPassword}
             />
-            <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-              <Text style={styles.showHide}>{showConfirmPassword ? "Hide" : "Show"}</Text>
+            {/* HIDE/SHOW PASSWORD ICON */}
+            <TouchableOpacity
+              style={{ position: 'absolute', right: 10, top: 12 }}
+              onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+            >
+              <FontAwesome
+                name={showConfirmPassword ? "eye-slash" : "eye"}
+                size={20}
+                color="#4B3A43"
+              />
             </TouchableOpacity>
+          </View>
 
             <TouchableOpacity style={styles.modalButton} onPress={handleSignup}>
               <Text style={styles.textButton}>Créer un compte</Text>
@@ -173,24 +202,6 @@ return (
             <TouchableOpacity onPress={() => setSignupModal(false)}>
               <Text style={styles.close}>Fermer</Text>
             </TouchableOpacity>
-
-            <TouchableOpacity onPress={() => setSigninModal(false)}>
-              <Text style={styles.close}>Fermer</Text>
-            </TouchableOpacity>
-
-
-            {/* HIDE/SHOW PASSWORD ICON */}
-
-            <TouchableOpacity
-              style={{ position: 'absolute', right: 10, top: 12 }}
-              onPress={() => setShowPassword(!showPassword)}
-             >
-            <FontAwesome
-              name={showPassword ? "eye-slash" : "eye"}
-              size={20}
-              color="#4B3A43"
-            />
-           </TouchableOpacity>
 
           </View>
         </View>
