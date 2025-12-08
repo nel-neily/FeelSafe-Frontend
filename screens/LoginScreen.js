@@ -59,7 +59,7 @@ export default function LoginScreen() {
     }
       dispatch(addSignin({ email, password }));
 
-      // Vider les champs
+      // Empty fields after signin
       setEmail("");
       setPassword("");
 
@@ -96,7 +96,7 @@ export default function LoginScreen() {
 
     dispatch(addSignup({ email, password, confirmPassword }));
 
-    // Vider les champs
+    // Empty fields after signup
     setEmail("");
     setPassword("");
     setConfirmPassword("");
