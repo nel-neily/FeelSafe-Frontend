@@ -18,7 +18,6 @@ import { useNavigation } from '@react-navigation/native';
 export default function LoginScreen() {
 
     const navigation = useNavigation();
-
     const dispatch = useDispatch();
 
     // Modales
@@ -30,6 +29,10 @@ export default function LoginScreen() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
+
+    // Show/hide password
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     // Signin action
   const handleSignin = () => {
@@ -88,14 +91,19 @@ return (
               style={styles.input}
               placeholder="Email"
               onChangeText={setEmail}
+              autoCapitalize="none"
             />
 
             <TextInput
               style={styles.input}
               placeholder="Password"
-              secureTextEntry
+              secureTextEntry={!showPassword}
               onChangeText={setPassword}
+              autoCapitalize="none"
             />
+            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+              <Text style={styles.showHide}>{showPassword ? "Hide" : "Show"}</Text>
+            </TouchableOpacity>
 
             <TouchableOpacity style={styles.modalButton} onPress={handleSignin}>
               <Text style={styles.textButton}>Validate</Text>
@@ -119,21 +127,30 @@ return (
               style={styles.input}
               placeholder="Email"
               onChangeText={setEmail}
+              autoCapitalize="none"
             />
 
             <TextInput
               style={styles.input}
               placeholder="Password"
-              secureTextEntry
+              secureTextEntry={!showPassword}
               onChangeText={setPassword}
+              autoCapitalize="none"
             />
+            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+              <Text style={styles.showHide}>{showPassword ? "Hide" : "Show"}</Text>
+            </TouchableOpacity>
 
             <TextInput
               style={styles.input}
               placeholder="Confirm Password"
-              secureTextEntry
+              secureTextEntry={!showConfirmPassword}
               onChangeText={setConfirmPassword}
+              autoCapitalize="none"
             />
+            <TouchableOpacity onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
+              <Text style={styles.showHide}>{showConfirmPassword ? "Hide" : "Show"}</Text>
+            </TouchableOpacity>
 
             <TouchableOpacity style={styles.modalButton} onPress={handleSignup}>
               <Text style={styles.textButton}>Create account</Text>
@@ -163,7 +180,6 @@ return (
           </View>
         </View>
       </Modal>
-
     </KeyboardAvoidingView>
   );
 }
@@ -199,8 +215,6 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
     fontSize: 16,
   },
-
-  // --- Modals ---
   modalWrapper: {
     flex: 1,
     backgroundColor: '#000000aa',
@@ -238,5 +252,10 @@ const styles = StyleSheet.create({
     marginTop: 15,
     color: '#4B3A43',
     fontWeight: '600',
-  }
+  },
+  showHide: {
+    color: '#4B3A43',
+    marginTop: 5,
+    fontWeight: '600',
+  },
 });
