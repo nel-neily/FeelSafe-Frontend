@@ -45,7 +45,7 @@ export default function LoginScreen() {
     // SIGNIN ACTION
   const handleSignin = () => {
 
-    // Regex pour valider le format email
+    // Regex to validate the email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!email) {
@@ -58,6 +58,11 @@ export default function LoginScreen() {
       return;
     }
       dispatch(addSignin({ email, password }));
+
+      // Vider les champs
+      setEmail("");
+      setPassword("");
+
       setSigninModal(false);
       navigation.navigate("TabNavigator", { screen: "MapScreen" });
     };
@@ -65,7 +70,7 @@ export default function LoginScreen() {
   // SIGNUP ACTION
   const handleSignup = () => {
 
-    // Regex pour valider le format email
+    // Regex to validate the email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!email) {
@@ -90,6 +95,12 @@ export default function LoginScreen() {
 
 
     dispatch(addSignup({ email, password, confirmPassword }));
+
+    // Vider les champs
+    setEmail("");
+    setPassword("");
+    setConfirmPassword("");
+
     setSignupModal(false);
     navigation.navigate("TabNavigator", { screen: "Map" });
   };
@@ -171,7 +182,7 @@ return (
         <Text style={styles.textButton}>Valider</Text>
       </TouchableOpacity> */}
 
-      {/* Mask the Signin button until all inputs are validated */}
+      {/* Hide the Signin button color until all inputs are validated */}
 
       <TouchableOpacity
         style={{
@@ -258,7 +269,7 @@ return (
               <Text style={styles.textButton}>Créer un compte</Text>
             </TouchableOpacity> */}
 
-            {/* Mask the Signup button until all inputs are validated */}
+            {/* Hide the Signup button color until all inputs are validated */}
 
             <TouchableOpacity
               style={{
