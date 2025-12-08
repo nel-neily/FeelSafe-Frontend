@@ -14,6 +14,7 @@ import { useDispatch } from 'react-redux';
 import { addSignin, addSignup, addGoogle, addNoaccount } from '../reducers/login';
 import { useNavigation } from '@react-navigation/native';
 import FontAwesome from "react-native-vector-icons/FontAwesome";
+import { Alert } from 'react-native';
 
 
 export default function LoginScreen() {
@@ -35,15 +36,59 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  // Remplace 'Alert' with 'Alerte' in French
+    const Alerte = (message) => {
+    Alert.alert("Alerte", message, [{ text: "OK" }]);
+
+
+};
     // Signin action
   const handleSignin = () => {
-    dispatch(addSignin({ email, password }));
-    setSigninModal(false);
-    navigation.navigate("TabNavigator", { screen: "MapScreen" });
-  };
+
+    // Regex pour valider le format email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!email) {
+      Alerte("Veuillez saisir votre mail.");
+      return;
+    }
+
+    if (!emailRegex.test(email)) {
+      Alerte("Veuillez saisir une adresse mail valide.");
+      return;
+    }
+      dispatch(addSignin({ email, password }));
+      setSigninModal(false);
+      navigation.navigate("TabNavigator", { screen: "MapScreen" });
+    };
   
   // Signup action
   const handleSignup = () => {
+
+    // Regex pour valider le format email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!email) {
+      Alerte("Veuillez saisir votre mail.");
+      return;
+    }
+
+    if (!emailRegex.test(email)) {
+      Alerte("Veuillez saisir une adresse mail valide.");
+      return;
+    }
+
+    if (!password) {
+      Alerte("Veuillez saisir un mot de passe.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      Alerte("Les mots de passe ne correspondent pas.");
+      return;
+    }
+
+
     dispatch(addSignup({ email, password, confirmPassword }));
     setSignupModal(false);
     navigation.navigate("TabNavigator", { screen: "Map" });
