@@ -16,8 +16,7 @@ import { useNavigation } from '@react-navigation/native';
 import FontAwesome from "react-native-vector-icons/FontAwesome";
 import { Alert } from 'react-native';
 
-const BACKEND_URL = process.env.BACKEND_URL;
-
+const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 
 export default function LoginScreen() {
 
@@ -46,7 +45,6 @@ export default function LoginScreen() {
 };
     // SIGNIN ACTION
   const handleSignin = async () => {
-
     try {
     // Regex to validate the email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -73,7 +71,7 @@ export default function LoginScreen() {
 
     const data = await response.json();
 
-    if (data.token) {
+    if (data.user.token) {
       dispatch(addSignin({ email, token: data.token }));
 
       // Empty fields after signin
@@ -83,6 +81,8 @@ export default function LoginScreen() {
       setSigninModal(false);
       navigation.navigate("TabNavigator", { screen: "MapScreen" });
     } else {
+      setEmail("");
+      setPassword("");
       Alerte("Email ou mot de passe incorrect");
           }
         }
@@ -128,11 +128,12 @@ export default function LoginScreen() {
     });
 
     const data = await response.json();
+  
 
-    if (data.token) {
+    if (data.user.token) {
 
 
-    dispatch(addSignup({ email, password, confirmPassword }));
+    dispatch(addSignup({ email, username: data.user.username, token: data.user.token, addresses: data.user.addresses }));
 
     // Empty fields after signup
     setEmail("");
@@ -142,6 +143,9 @@ export default function LoginScreen() {
     setSignupModal(false);
     navigation.navigate("TabNavigator", { screen: "Map" });
     } else {
+      setEmail("");
+    setPassword("");
+    setConfirmPassword("");
       Alerte("Email ou mot de passe incorrect");
           }
         }
@@ -159,7 +163,7 @@ export default function LoginScreen() {
     navigation.navigate("TabNavigator", { screen: "Map" });
   };
 
-  // NO ACCOUNT ACTION
+  // CONTINUE WITHOUT ACCOUNT ACTION
   const handleNoAccount = () => {
     dispatch(addNoaccount(true));
     navigation.navigate("TabNavigator", { screen: "Map" });
@@ -224,10 +228,6 @@ return (
           />
         </TouchableOpacity>
       </View>
-
-      {/* <TouchableOpacity style={styles.modalButton} onPress={handleSignin}>
-        <Text style={styles.textButton}>Valider</Text>
-      </TouchableOpacity> */}
 
       <TouchableOpacity
         style={{
@@ -312,9 +312,6 @@ return (
             </TouchableOpacity>
           </View>
 
-            {/* <TouchableOpacity style={styles.modalButton} onPress={handleSignup}>
-              <Text style={styles.textButton}>Créer un compte</Text>
-            </TouchableOpacity> */}
 
             <TouchableOpacity
               style={{

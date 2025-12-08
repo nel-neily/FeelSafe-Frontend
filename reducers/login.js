@@ -1,10 +1,10 @@
 import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
-    signin: null,
-    signup: null,
-    google: false,
-    noaccount: false,
+    email:null,
+    token:null,
+    username:null,
+    addresses: [],
     };
 
 export const loginSlice = createSlice({
