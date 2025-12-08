@@ -13,6 +13,7 @@ import {
 import { useDispatch } from 'react-redux';
 import { addSignin, addSignup, addGoogle, addNoaccount } from '../reducers/login';
 import { useNavigation } from '@react-navigation/native';
+import FontAwesome from "react-native-vector-icons/FontAwesome";
 
 
 export default function LoginScreen() {
@@ -112,6 +113,19 @@ return (
             <TouchableOpacity onPress={() => setSigninModal(false)}>
               <Text style={styles.close}>Fermer</Text>
             </TouchableOpacity>
+
+            {/* HIDE/SHOW PASSWORD ICON */}
+
+            <TouchableOpacity
+              style={{ position: 'absolute', right: 10, top: 12 }}
+              onPress={() => setShowPassword(!showPassword)}
+             >
+            <FontAwesome
+              name={showPassword ? "eye-slash" : "eye"}
+              size={20}
+              color="#4B3A43"
+            />
+           </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -159,6 +173,25 @@ return (
             <TouchableOpacity onPress={() => setSignupModal(false)}>
               <Text style={styles.close}>Fermer</Text>
             </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => setSigninModal(false)}>
+              <Text style={styles.close}>Fermer</Text>
+            </TouchableOpacity>
+
+
+            {/* HIDE/SHOW PASSWORD ICON */}
+
+            <TouchableOpacity
+              style={{ position: 'absolute', right: 10, top: 12 }}
+              onPress={() => setShowPassword(!showPassword)}
+             >
+            <FontAwesome
+              name={showPassword ? "eye-slash" : "eye"}
+              size={20}
+              color="#4B3A43"
+            />
+           </TouchableOpacity>
+
           </View>
         </View>
       </Modal>
