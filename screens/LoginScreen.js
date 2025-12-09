@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from "react";
 import {
   Image,
   KeyboardAvoidingView,
@@ -9,180 +9,192 @@ import {
   TouchableOpacity,
   View,
   Modal,
-} from 'react-native';
-import { useDispatch } from 'react-redux';
-import { addUser } from '../reducers/user';
-import { useNavigation } from '@react-navigation/native';
+} from "react-native";
+import { useDispatch } from "react-redux";
+import { addUser } from "../reducers/user";
+import { useNavigation } from "@react-navigation/native";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
-import { Alert } from 'react-native';
+import { Alert } from "react-native";
 
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 
 export default function LoginScreen() {
+  const navigation = useNavigation();
+  const dispatch = useDispatch();
 
-    const navigation = useNavigation();
-    const dispatch = useDispatch();
+  // Modals
+  const [isSigninModal, setSigninModal] = useState(false);
+  const [isSignupModal, setSignupModal] = useState(false);
+  const [isGoogleModal, setGoogleModal] = useState(false);
 
-    // Modals
-    const [isSigninModal, setSigninModal] = useState(false);
-    const [isSignupModal, setSignupModal] = useState(false);
-    const [isGoogleModal, setGoogleModal] = useState(false);
+  // Fields
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
-    // Fields
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [confirmPassword, setConfirmPassword] = useState("");
-
-    // Show/hide password
+  // Show/hide password
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Remplace 'Alert' with 'Alerte' in French
-    const Alerte = (message) => {
+  const Alerte = (message) => {
     Alert.alert("Alerte", message, [{ text: "OK" }]);
-
-
-};
-    // SIGNIN ACTION
+  };
+  // SIGNIN ACTION
   const handleSignin = async () => {
     try {
-    // Regex to validate the email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      // Regex to validate the email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    if (!email) {
-      Alerte("Veuillez saisir votre mail.");
-      return;
+      if (!email) {
+        Alerte("Veuillez saisir votre mail.");
+        return;
+      }
+
+      if (!emailRegex.test(email)) {
+        Alerte("Veuillez saisir une adresse mail valide.");
+        return;
+      }
+
+      // Call backend
+
+      const response = await fetch(`${BACKEND_URL}/users/signin`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (data.user.token) {
+        dispatch(
+          addUser({
+            email,
+            token: data.user.token,
+            username: data.user.username,
+            addresses: data.user.addresses,
+          })
+        );
+
+        // Empty fields after signin
+        setEmail("");
+        setPassword("");
+
+        setSigninModal(false);
+        navigation.navigate("TabNavigator", { screen: "MapScreen" });
+      } else {
+        setEmail("");
+        setPassword("");
+        Alerte("Email ou mot de passe incorrect");
+      }
+    } catch (error) {
+      console.error(error);
+      Alerte("Erreur lors de la connexion");
     }
-
-    if (!emailRegex.test(email)) {
-      Alerte("Veuillez saisir une adresse mail valide.");
-      return;
-    }
-  
-
-  // Call backend 
-
-
-  const response = await fetch(`${BACKEND_URL}/users/signin`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
-
-    const data = await response.json();
-
-    if (data.user.token) {
-      dispatch(addUser({ email, token: data.user.token, username: data.user.username, addresses: data.user.addresses }));
-
-      // Empty fields after signin
-      setEmail("");
-      setPassword("");
-
-      setSigninModal(false);
-      navigation.navigate("TabNavigator", { screen: "MapScreen" });
-    } else {
-      setEmail("");
-      setPassword("");
-      Alerte("Email ou mot de passe incorrect");
-          }
-        }
-   catch (error) {
-    console.error(error);
-    Alerte("Erreur lors de la connexion");
-  }
   };
-  
+
   // SIGNUP ACTION
-  const handleSignup  = async () => {
-
+  const handleSignup = async () => {
     try {
-    // Regex to validate the email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      // Regex to validate the email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    if (!email) {
-      Alerte("Veuillez saisir votre mail.");
-      return;
+      if (!email) {
+        Alerte("Veuillez saisir votre mail.");
+        return;
+      }
+
+      if (!emailRegex.test(email)) {
+        Alerte("Veuillez saisir une adresse mail valide.");
+        return;
+      }
+
+      if (!password) {
+        Alerte("Veuillez saisir un mot de passe.");
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        Alerte("Les mots de passe ne correspondent pas.");
+        return;
+      }
+
+      // Call backend
+
+      const response = await fetch(`${BACKEND_URL}/users/signup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (data.user.token) {
+        dispatch(
+          addUser({
+            email,
+            username: data.user.username,
+            token: data.user.token,
+            addresses: data.user.addresses,
+          })
+        );
+
+        // Empty fields after signup
+        setEmail("");
+        setPassword("");
+        setConfirmPassword("");
+
+        setSignupModal(false);
+        navigation.navigate("TabNavigator", { screen: "Map" });
+      } else {
+        setEmail("");
+        setPassword("");
+        setConfirmPassword("");
+        Alerte("Email ou mot de passe incorrect");
+      }
+    } catch (error) {
+      console.error(error);
+      Alerte("Erreur lors de la connexion");
     }
-
-    if (!emailRegex.test(email)) {
-      Alerte("Veuillez saisir une adresse mail valide.");
-      return;
-    }
-
-    if (!password) {
-      Alerte("Veuillez saisir un mot de passe.");
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      Alerte("Les mots de passe ne correspondent pas.");
-      return;
-    }
-
-    // Call backend 
-
-    const response = await fetch(`${BACKEND_URL}/users/signup`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
-
-    const data = await response.json();
-  
-
-    if (data.user.token) {
-
-
-    dispatch(addUser({ email, username: data.user.username, token: data.user.token, addresses: data.user.addresses }));
-
-    // Empty fields after signup
-    setEmail("");
-    setPassword("");
-    setConfirmPassword("");
-
-    setSignupModal(false);
-    navigation.navigate("TabNavigator", { screen: "Map" });
-    } else {
-     setEmail("");
-     setPassword("");
-     setConfirmPassword("");
-      Alerte("Email ou mot de passe incorrect");
-          }
-        }
-   catch (error) {
-    console.error(error);
-    Alerte("Erreur lors de la connexion");
-  }
   };
-
 
   // GOOGLE SIGN IN ACTION
   const handleGoogle = () => {
-    dispatch(addUser(true));
     setGoogleModal(false);
     navigation.navigate("TabNavigator", { screen: "Map" });
   };
 
   // CONTINUE WITHOUT ACCOUNT ACTION
   const handleNoAccount = () => {
-    dispatch(addUser(true));
     navigation.navigate("TabNavigator", { screen: "Map" });
   };
 
-return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <Image style={styles.image} source={require('../assets/logo-rond.png')} />
+  return (
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <Image style={styles.image} source={require("../assets/logo-rond.png")} />
 
       {/* ----- BUTTONS ----- */}
-      <TouchableOpacity style={styles.button} onPress={() => setSigninModal(true)}>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => setSigninModal(true)}
+      >
         <Text style={styles.textButton}>Se connecter</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.button} onPress={() => setSignupModal(true)}>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => setSignupModal(true)}
+      >
         <Text style={styles.textButton}>Créer un compte</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={styles.button} onPress={() => setGoogleModal(true)}>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => setGoogleModal(true)}
+      >
         <Text style={styles.textButton}>Se connecter avec Google</Text>
       </TouchableOpacity>
 
@@ -190,7 +202,6 @@ return (
         <Text style={styles.link}>Continuer sans compte</Text>
       </TouchableOpacity>
 
-     
       {/* ---  SIGNIN MODAL --- */}
       <Modal visible={isSigninModal} transparent animationType="slide">
         <View style={styles.modalWrapper}>
@@ -207,51 +218,47 @@ return (
             />
 
             {/* PASSWORD */}
-            <View style={{ width: '90%', marginTop: 15, position: 'relative' }}>
-           <TextInput
-             style={{ ...styles.input, paddingRight: 40 }} // espace pour l'icône
-             placeholder="Mot de passe"
-             secureTextEntry={!showPassword}
-             onChangeText={setPassword}
-             autoCapitalize="none"
-             value={password}
-        />
-        {/* HIDE/SHOW PASSWORD ICON */}
-        <TouchableOpacity
-          style={{ position: 'absolute', right: 10, top: 12 }}
-          onPress={() => setShowPassword(!showPassword)}
-        >
-          <FontAwesome
-            name={showPassword ? "eye-slash" : "eye"}
-            size={20}
-            color="#4B3A43"
-          />
-        </TouchableOpacity>
-      </View>
+            <View style={{ width: "90%", marginTop: 15, position: "relative" }}>
+              <TextInput
+                style={{ ...styles.input, paddingRight: 40 }} // espace pour l'icône
+                placeholder="Mot de passe"
+                secureTextEntry={!showPassword}
+                onChangeText={setPassword}
+                autoCapitalize="none"
+                value={password}
+              />
+              {/* HIDE/SHOW PASSWORD ICON */}
+              <TouchableOpacity
+                style={{ position: "absolute", right: 10, top: 12 }}
+                onPress={() => setShowPassword(!showPassword)}
+              >
+                <FontAwesome
+                  name={showPassword ? "eye-slash" : "eye"}
+                  size={20}
+                  color="#4B3A43"
+                />
+              </TouchableOpacity>
+            </View>
 
-      <TouchableOpacity
-        style={{
-          ...styles.modalButton,
-          backgroundColor: email && password ? '#4B3A43' : '#888', // gris si vide
-        }}
-        onPress={handleSignin}
+            <TouchableOpacity
+              style={{
+                ...styles.modalButton,
+                backgroundColor: email && password ? "#4B3A43" : "#888", // gris si vide
+              }}
+              onPress={handleSignin}
+              // Hide the Signin button color until all fields are completed
+              disabled={!email || !password}
+            >
+              <Text style={styles.textButton}>Valider</Text>
+            </TouchableOpacity>
 
-        // Hide the Signin button color until all fields are completed
-        disabled={!email || !password} 
-      >
-        <Text style={styles.textButton}>Valider</Text>
-      </TouchableOpacity>
-
-
-      <TouchableOpacity onPress={() => setSigninModal(false)}>
-        <Text style={styles.close}>Fermer</Text>
-      </TouchableOpacity>
-
-    </View>
-  </View>
+            <TouchableOpacity onPress={() => setSigninModal(false)}>
+              <Text style={styles.close}>Fermer</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </Modal>
 
-     
       {/* --- SIGNUP MODAL --- */}
       <Modal visible={isSignupModal} transparent animationType="slide">
         <View style={styles.modalWrapper}>
@@ -267,74 +274,69 @@ return (
             />
 
             {/* PASSWORD */}
-            <View style={{ width: '90%', marginTop: 15, position: 'relative' }}>
-            <TextInput
-              style={{ ...styles.input, paddingRight: 40 }}
-              placeholder="Mot de passe"
-              secureTextEntry={!showPassword}
-              onChangeText={setPassword}
-              autoCapitalize="none"
-              value={password}
-            />
-            <TouchableOpacity
-              style={{ position: 'absolute', right: 10, top: 12 }}
-              onPress={() => setShowPassword(!showPassword)}
-            >
-              <FontAwesome
-                name={showPassword ? "eye-slash" : "eye"}
-                size={20}
-                color="#4B3A43"
+            <View style={{ width: "90%", marginTop: 15, position: "relative" }}>
+              <TextInput
+                style={{ ...styles.input, paddingRight: 40 }}
+                placeholder="Mot de passe"
+                secureTextEntry={!showPassword}
+                onChangeText={setPassword}
+                autoCapitalize="none"
+                value={password}
               />
-            </TouchableOpacity>
-          </View>
-
+              <TouchableOpacity
+                style={{ position: "absolute", right: 10, top: 12 }}
+                onPress={() => setShowPassword(!showPassword)}
+              >
+                <FontAwesome
+                  name={showPassword ? "eye-slash" : "eye"}
+                  size={20}
+                  color="#4B3A43"
+                />
+              </TouchableOpacity>
+            </View>
 
             {/* CONFIRM PASSWORD */}
-            <View style={{ width: '90%', marginTop: 15, position: 'relative' }}>
-            <TextInput
-              style={{ ...styles.input, paddingRight: 40 }}
-              placeholder="Confirmer le mot de passe"
-              secureTextEntry={!showConfirmPassword}
-              onChangeText={setConfirmPassword}
-              autoCapitalize="none"
-              value={confirmPassword}
-            />
-            {/* HIDE/SHOW PASSWORD ICON */}
-            <TouchableOpacity
-              style={{ position: 'absolute', right: 10, top: 12 }}
-              onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-            >
-              <FontAwesome
-                name={showConfirmPassword ? "eye-slash" : "eye"}
-                size={20}
-                color="#4B3A43"
+            <View style={{ width: "90%", marginTop: 15, position: "relative" }}>
+              <TextInput
+                style={{ ...styles.input, paddingRight: 40 }}
+                placeholder="Confirmer le mot de passe"
+                secureTextEntry={!showConfirmPassword}
+                onChangeText={setConfirmPassword}
+                autoCapitalize="none"
+                value={confirmPassword}
               />
-            </TouchableOpacity>
-          </View>
-
+              {/* HIDE/SHOW PASSWORD ICON */}
+              <TouchableOpacity
+                style={{ position: "absolute", right: 10, top: 12 }}
+                onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+              >
+                <FontAwesome
+                  name={showConfirmPassword ? "eye-slash" : "eye"}
+                  size={20}
+                  color="#4B3A43"
+                />
+              </TouchableOpacity>
+            </View>
 
             <TouchableOpacity
               style={{
                 ...styles.modalButton,
-                backgroundColor: email && password && confirmPassword ? '#4B3A43' : '#888',
+                backgroundColor:
+                  email && password && confirmPassword ? "#4B3A43" : "#888",
               }}
               onPress={handleSignup}
-
               // Hide the Signup button color until all fields are completed
               disabled={!email || !password || !confirmPassword}
             >
               <Text style={styles.textButton}>Créer un compte</Text>
             </TouchableOpacity>
 
-
             <TouchableOpacity onPress={() => setSignupModal(false)}>
               <Text style={styles.close}>Fermer</Text>
             </TouchableOpacity>
-
           </View>
         </View>
       </Modal>
-
 
       {/* --- GOOGLE SIGN IN MODAL --- */}
       <Modal visible={isGoogleModal} transparent animationType="fade">
@@ -359,75 +361,75 @@ return (
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#4B3A43',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#4B3A43",
+    alignItems: "center",
+    justifyContent: "center",
   },
   image: {
-    width: '100%',
-    height: '40%',
+    width: "100%",
+    height: "40%",
     marginBottom: 50,
   },
   button: {
-    width: '70%',
+    width: "70%",
     padding: 12,
     marginVertical: 10,
-    backgroundColor: '#ffffff33',
+    backgroundColor: "#ffffff33",
     borderRadius: 10,
-    alignItems: 'center',
+    alignItems: "center",
   },
   textButton: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   link: {
     marginTop: 20,
-    color: '#ffffff',
-    textDecorationLine: 'underline',
+    color: "#ffffff",
+    textDecorationLine: "underline",
     fontSize: 16,
   },
   modalWrapper: {
     flex: 1,
-    backgroundColor: '#000000aa',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#000000aa",
+    justifyContent: "center",
+    alignItems: "center",
   },
   modalBox: {
-    width: '85%',
-    backgroundColor: '#fff',
+    width: "85%",
+    backgroundColor: "#fff",
     padding: 25,
     borderRadius: 12,
-    alignItems: 'center',
+    alignItems: "center",
     gap: 10,
   },
   modalTitle: {
     fontSize: 22,
-    fontWeight: '700',
+    fontWeight: "700",
     marginBottom: 10,
   },
   input: {
-    width: '90%',
+    width: "90%",
     borderBottomWidth: 1,
     paddingVertical: 8,
     marginTop: 15,
   },
   modalButton: {
-    backgroundColor: '#4B3A43',
+    backgroundColor: "#4B3A43",
     padding: 12,
     borderRadius: 10,
     marginTop: 20,
-    width: '80%',
-    alignItems: 'center',
+    width: "80%",
+    alignItems: "center",
   },
   close: {
     marginTop: 15,
-    color: '#4B3A43',
-    fontWeight: '600',
+    color: "#4B3A43",
+    fontWeight: "600",
   },
   showHide: {
-    color: '#4B3A43',
+    color: "#4B3A43",
     marginTop: 5,
-    fontWeight: '600',
+    fontWeight: "600",
   },
 });

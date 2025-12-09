@@ -11,13 +11,32 @@ import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
 import { useEffect, useState, useRef } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { updateUser, logoutUser } from "../reducers/user";
+export default function ProfileScreen({ navigation }) {
+  // GLOBALS VARIABLES
 
-export default function ProfileScreen() {
+  const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
+  const user = useSelector((state) => state.user.value);
+  const dispatch = useDispatch();
   // GESTION DU USERNAME
-  const [username, setUsername] = useState("");
-  const [isChangingUserName, setIsChangingUsername] = useState(false);
 
-  const saveUsername = () => {
+  const [newUsername, setNewUsername] = useState("");
+  const [isChangingUserName, setIsChangingUsername] = useState(false);
+  const username = user.username;
+  const saveUsername = async () => {
+    const response = await fetch(
+      `${BACKEND_URL}/users/update?username=${newUsername}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: user.email }),
+      }
+    );
+    const data = await response.json();
+    dispatch(updateUser({ username: data.username }));
     setIsChangingUsername(false);
   };
 
@@ -28,16 +47,38 @@ export default function ProfileScreen() {
   //   un input vient requêté une API Géoloc française toutes les secondes où le user ne tape plus
   //   une collection de propositions viennent s'afficher et le user n'a qu'à cliquer sur uen adresse pour qu'elle s'enregistre
   const [newAdress, setNewAdress] = useState("");
-  const [adresses, setAdresses] = useState([]);
   const [streetPropositions, setStreetPropositions] = useState([]);
-  const addAddress = (arg) => {
-    setAdresses([...adresses, arg]);
+  const adresses = user.addresses;
+
+  const addAddress = async (newAddress) => {
+    const response = await fetch(
+      `${BACKEND_URL}/users/update?addresses=${newAddress}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: user.email }),
+      }
+    );
+    const data = await response.json();
+    dispatch(updateUser({ addresses: data.addresses }));
     setNewAdress("");
     setStreetPropositions([]);
   };
-  const removeAdress = (arr) => {
-    const newDataSet = adresses.filter((data) => data !== arr);
-    setAdresses(newDataSet);
+  const removeAdress = async (addressToDelete) => {
+    const response = await fetch(
+      `${BACKEND_URL}/users/update?addresses=${addressToDelete}`,
+      {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: user.email }),
+      }
+    );
+    const data = await response.json();
+    dispatch(updateUser({ addresses: data.addresses }));
   };
 
   const displayedAdresses = adresses.map((adresse, i) => {
@@ -68,7 +109,9 @@ export default function ProfileScreen() {
   });
 
   const displayedStreetPropositions = streetPropositions.map((adresse, i) => {
-    const combinedAdress = `${adresse.street} - ${adresse.city} - ${adresse.postcode}`;
+    const combinedAdress = `${adresse.housenumber ? adresse.housenumber : ""} ${
+      adresse.street
+    } - ${adresse.city} - ${adresse.postcode}`;
     const formattedAdress =
       combinedAdress.length > 45 ? combinedAdress.slice(0, 45) : combinedAdress;
     return (
@@ -103,8 +146,9 @@ export default function ProfileScreen() {
       const data = await response.json();
       const allFeatures = data.features;
       const streetsNames = allFeatures.map((feature) => {
-        const { street, city, postcode } = feature.properties;
+        const { housenumber, street, city, postcode } = feature.properties;
         return {
+          housenumber,
           street,
           city,
           postcode,
@@ -149,6 +193,8 @@ export default function ProfileScreen() {
 
   const logout = () => {
     console.log("logout");
+    dispatch(logoutUser());
+    navigation.navigate("Login");
   };
 
   //   GESTION DE LA SUPPRESSION DE COMPTE
@@ -182,8 +228,8 @@ export default function ProfileScreen() {
                   style={[styles.text_white, { width: "70%" }]}
                   placeholder="Enter your username"
                   placeholderTextColor="#fff"
-                  value={username}
-                  onChangeText={(value) => setUsername(value)}
+                  value={newUsername}
+                  onChangeText={(value) => setNewUsername(value)}
                 ></TextInput>
                 <TouchableOpacity
                   style={{ justifyContent: "center", alignItems: "center" }}
@@ -232,11 +278,12 @@ export default function ProfileScreen() {
               }}
             >
               <TextInput
-                placeholder="Nouvelle adresse"
+                placeholder="Nouvelle addresse"
                 placeholderTextColor="#fff"
                 style={{
                   width: "80%",
                   height: "100%",
+                  color: "#fff",
                 }}
                 value={newAdress}
                 onChangeText={(value) => setNewAdress(value)}
@@ -252,6 +299,7 @@ export default function ProfileScreen() {
                   position: "absolute",
                   top: 110,
                   borderRadius: 10,
+                  zIndex: 10,
                 }}
               >
                 {displayedStreetPropositions}
@@ -295,7 +343,7 @@ export default function ProfileScreen() {
           </TouchableOpacity>
           <Modal
             animationType="slide"
-            transparent={true}
+            transparent={false}
             visible={eraseAccountModal}
             onRequestClose={() => {
               setEraseAccountModal(!eraseAccountModal);
