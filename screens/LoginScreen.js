@@ -158,11 +158,6 @@ export default function LoginScreen() {
     }
   };
 
-  // GOOGLE SIGN IN ACTION
-  const handleGoogle = () => {
-    setGoogleModal(false);
-    navigation.navigate("TabNavigator", { screen: "Map" });
-  };
 
   // CONTINUE WITHOUT ACCOUNT ACTION
   const handleNoAccount = () => {
@@ -189,13 +184,6 @@ export default function LoginScreen() {
         onPress={() => setSignupModal(true)}
       >
         <Text style={styles.textButton}>Créer un compte</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => setGoogleModal(true)}
-      >
-        <Text style={styles.textButton}>Se connecter avec Google</Text>
       </TouchableOpacity>
 
       <TouchableOpacity onPress={handleNoAccount}>
@@ -338,22 +326,6 @@ export default function LoginScreen() {
         </View>
       </Modal>
 
-      {/* --- GOOGLE SIGN IN MODAL --- */}
-      <Modal visible={isGoogleModal} transparent animationType="fade">
-        <View style={styles.modalWrapper}>
-          <View style={styles.modalBox}>
-            <Text style={styles.modalTitle}>Continuer avec Google</Text>
-
-            <TouchableOpacity style={styles.modalButton} onPress={handleGoogle}>
-              <Text style={styles.textButton}>Se connecter avec Google</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity onPress={() => setGoogleModal(false)}>
-              <Text style={styles.close}>Fermer</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </KeyboardAvoidingView>
   );
 }
