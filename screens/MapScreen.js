@@ -5,4 +5,5 @@ export default function MapScreen() {
     return (
         <Text>Continuer sur MapScreen</Text> 
     )
+       
 }

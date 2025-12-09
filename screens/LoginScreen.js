@@ -11,7 +11,7 @@ import {
   Modal,
 } from 'react-native';
 import { useDispatch } from 'react-redux';
-import { addSignin, addSignup, addGoogle, addNoaccount } from '../reducers/login';
+import { addUser } from '../reducers/user';
 import { useNavigation } from '@react-navigation/native';
 import FontAwesome from "react-native-vector-icons/FontAwesome";
 import { Alert } from 'react-native';
@@ -72,7 +72,7 @@ export default function LoginScreen() {
     const data = await response.json();
 
     if (data.user.token) {
-      dispatch(addSignin({ email, token: data.token }));
+      dispatch(addUser({ email, token: data.token }));
 
       // Empty fields after signin
       setEmail("");
@@ -133,7 +133,7 @@ export default function LoginScreen() {
     if (data.user.token) {
 
 
-    dispatch(addSignup({ email, username: data.user.username, token: data.user.token, addresses: data.user.addresses }));
+    dispatch(addUser({ email, username: data.user.username, token: data.user.token, addresses: data.user.addresses }));
 
     // Empty fields after signup
     setEmail("");
@@ -158,14 +158,14 @@ export default function LoginScreen() {
 
   // GOOGLE ACTION
   const handleGoogle = () => {
-    dispatch(addGoogle(true));
+    dispatch(addUser(true));
     setGoogleModal(false);
     navigation.navigate("TabNavigator", { screen: "Map" });
   };
 
   // CONTINUE WITHOUT ACCOUNT ACTION
   const handleNoAccount = () => {
-    dispatch(addNoaccount(true));
+    dispatch(addUser(true));
     navigation.navigate("TabNavigator", { screen: "Map" });
   };
 

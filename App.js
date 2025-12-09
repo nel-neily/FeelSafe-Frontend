@@ -9,7 +9,7 @@ import ProfileScreen from "./screens/ProfileScreen";
 
 import { Provider } from "react-redux";
 import { configureStore } from '@reduxjs/toolkit';
-import login from './reducers/login';
+import login from './reducers/user';
 
 const store = configureStore({
   reducer: { login },
