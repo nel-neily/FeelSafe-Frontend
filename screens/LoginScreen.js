@@ -156,7 +156,6 @@ export default function LoginScreen() {
 
   // CONTINUE WITHOUT ACCOUNT ACTION
   const handleNoAccount = () => {
-    dispatch(addUser(true));
     navigation.navigate("TabNavigator", { screen: "Map" });
   };
 
