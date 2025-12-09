@@ -6,6 +6,7 @@ import {
   View,
   ScrollView,
   Modal,
+  Image,
 } from "react-native";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -13,6 +14,7 @@ import FontAwesome from "react-native-vector-icons/FontAwesome";
 import { useEffect, useState, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { updateUser, logoutUser } from "../reducers/user";
+import { Alert } from "react-native";
 export default function ProfileScreen({ navigation }) {
   // GLOBALS VARIABLES
 
@@ -192,17 +194,28 @@ export default function ProfileScreen({ navigation }) {
   //   GESTION DE LA DECONNECTION
 
   const logout = () => {
-    console.log("logout");
     dispatch(logoutUser());
     navigation.navigate("Login");
   };
 
   //   GESTION DE LA SUPPRESSION DE COMPTE
+  const Alerte = (message) => {
+    Alert.alert("Alerte", message, [{ text: "OK" }]);
+  };
 
   const [eraseAccountModal, setEraseAccountModal] = useState(false);
-  const deleteAccount = () => {
-    console.log("delete account");
+  const deleteAccount = async () => {
+    const response = await fetch(`${BACKEND_URL}/users/${user.token}`, {
+      method: "DELETE",
+    });
+    const data = await response.json();
+    if (!data.result) {
+      Alerte(
+        "Votre compte n'a pas été trouvé et donc n'a pas pu être supprimé"
+      );
+    }
     setEraseAccountModal(!eraseAccountModal);
+    navigation.navigate("Login");
   };
 
   return (
@@ -213,167 +226,212 @@ export default function ProfileScreen({ navigation }) {
             colors={["#26232F", "#282430", "#6C5364"]}
             style={styles.background}
           />
-          <View
+          <Image
+            source={require("../assets/logo-rond.png")}
             style={{
-              backgroundColor: "red",
-              height: 100,
-              width: 100,
-              marginBottom: 20,
+              height: 150,
+              width: 150,
             }}
-          ></View>
-          <View style={styles.username_view}>
-            {isChangingUserName && (
-              <>
-                <TextInput
-                  style={[styles.text_white, { width: "70%" }]}
-                  placeholder="Enter your username"
-                  placeholderTextColor="#fff"
-                  value={newUsername}
-                  onChangeText={(value) => setNewUsername(value)}
-                ></TextInput>
-                <TouchableOpacity
-                  style={{ justifyContent: "center", alignItems: "center" }}
-                  onPress={() => saveUsername()}
+          ></Image>
+          {user.token && (
+            <>
+              <View style={styles.username_view}>
+                {isChangingUserName && (
+                  <>
+                    <TextInput
+                      style={[styles.text_white, { width: "70%" }]}
+                      placeholder="Enter your username"
+                      placeholderTextColor="#fff"
+                      value={newUsername}
+                      onChangeText={(value) => setNewUsername(value)}
+                    ></TextInput>
+                    <TouchableOpacity
+                      style={{ justifyContent: "center", alignItems: "center" }}
+                      onPress={() => saveUsername()}
+                    >
+                      <Text style={styles.text_white}>OK</Text>
+                    </TouchableOpacity>
+                  </>
+                )}
+                {isChangingUserName || (
+                  <>
+                    <Text
+                      style={[
+                        styles.text_white,
+                        username
+                          ? { textAlign: "center", fontSize: 24 }
+                          : { textAlign: "left" },
+                        { width: "70%" },
+                      ]}
+                    >
+                      {username ? username : "Inscrivez votre username"}
+                    </Text>
+                    <FontAwesome
+                      name="pencil"
+                      color={"#fff"}
+                      size={20}
+                      onPress={() => setIsChangingUsername(true)}
+                    />
+                  </>
+                )}
+              </View>
+              <View style={{ flexDirection: "column", gap: 20, width: "100%" }}>
+                <Text style={[styles.text_white, { fontSize: 18 }]}>
+                  Adresses enregistrées
+                </Text>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "flex-start",
+                    width: "100%",
+                    borderWidth: 1,
+                    borderColor: "white",
+                    borderRadius: 10,
+                    paddingLeft: 5,
+                    height: 45,
+                  }}
                 >
-                  <Text style={styles.text_white}>OK</Text>
-                </TouchableOpacity>
-              </>
-            )}
-            {isChangingUserName || (
-              <>
+                  <TextInput
+                    placeholder="Nouvelle addresse"
+                    placeholderTextColor="#fff"
+                    style={{
+                      width: "80%",
+                      height: "100%",
+                      color: "#fff",
+                    }}
+                    value={newAdress}
+                    onChangeText={(value) => setNewAdress(value)}
+                  ></TextInput>
+                </View>
+
+                {streetPropositions.length > 0 && (
+                  <ScrollView
+                    style={{
+                      height: 150,
+                      width: "100%",
+                      backgroundColor: "#fff",
+                      position: "absolute",
+                      top: 110,
+                      borderRadius: 10,
+                      zIndex: 10,
+                    }}
+                  >
+                    {displayedStreetPropositions}
+                  </ScrollView>
+                )}
+              </View>
+              <ScrollView>{displayedAdresses}</ScrollView>
+              <TouchableOpacity
+                style={styles.button_main_features}
+                onPress={() => logout()}
+              >
+                <Text style={styles.text_white}>Se déconnecter</Text>
+              </TouchableOpacity>
+              {/* <TouchableOpacity
+                style={[
+                  styles.button_main_features,
+                  { flexDirection: "row", justifyContent: "space-around" },
+                ]}
+                onPress={() => setDarkMode(!darkMode)}
+              >
+                <Text style={styles.text_white}>Mode sombre</Text>
+                {darkMode && (
+                  <FontAwesome name="toggle-off" color={"#fff"} size={30} />
+                )}
+                {darkMode || (
+                  <FontAwesome name="toggle-on" color={"#fff"} size={30} />
+                )}
+              </TouchableOpacity> */}
+              <TouchableOpacity
+                style={[
+                  styles.button_main_features,
+                  {
+                    backgroundColor: "red",
+                  },
+                ]}
+                onPress={() => setEraseAccountModal(!eraseAccountModal)}
+              >
+                <Text style={[styles.text_white, { fontSize: 20 }]}>
+                  Supprimer votre compte
+                </Text>
+              </TouchableOpacity>
+              <Modal
+                animationType="slide"
+                transparent={true}
+                visible={eraseAccountModal}
+                onRequestClose={() => {
+                  setEraseAccountModal(!eraseAccountModal);
+                }}
+              >
+                <View style={styles.centeredView}>
+                  <View style={styles.modalView}>
+                    <Text
+                      style={{
+                        color: "#fff",
+                        fontSize: 24,
+                        textAlign: "center",
+                      }}
+                    >
+                      Cette étape est définitive, voulez vous supprimer votre
+                      compte?
+                    </Text>
+                    <TouchableOpacity
+                      style={styles.modalText}
+                      onPress={() => deleteAccount()}
+                    >
+                      <Text style={{ color: "red" }}>
+                        Suppression du compte
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.button, styles.buttonClose]}
+                      onPress={() => setEraseAccountModal(!eraseAccountModal)}
+                    >
+                      <Text style={[styles.textStyle, { color: "black" }]}>
+                        Annuler la suppression
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </Modal>
+            </>
+          )}
+          {!user.token && (
+            <>
+              <View style={{ alignItems: "center" }}>
                 <Text
                   style={[
                     styles.text_white,
-                    username
-                      ? { textAlign: "center", fontSize: 24 }
-                      : { textAlign: "left" },
-                    { width: "70%" },
+                    { fontSize: 18, textAlign: "center" },
                   ]}
                 >
-                  {username ? username : "Inscrivez votre username"}
+                  Vous devez avoir un compte actif pour pouvoir personnaliser
+                  votre expérience.
                 </Text>
-                <FontAwesome
-                  name="pencil"
-                  color={"#fff"}
-                  size={20}
-                  onPress={() => setIsChangingUsername(true)}
-                />
-              </>
-            )}
-          </View>
-          <View style={{ flexDirection: "column", gap: 20, width: "100%" }}>
-            <Text style={[styles.text_white, { fontSize: 24 }]}>
-              Adresses enregistrées
-            </Text>
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                width: "100%",
-                borderWidth: 2,
-                borderColor: "white",
-                borderRadius: 10,
-                padding: 5,
-                height: 50,
-              }}
-            >
-              <TextInput
-                placeholder="Nouvelle addresse"
-                placeholderTextColor="#fff"
-                style={{
-                  width: "80%",
-                  height: "100%",
-                  color: "#fff",
-                }}
-                value={newAdress}
-                onChangeText={(value) => setNewAdress(value)}
-              ></TextInput>
-            </View>
-
-            {streetPropositions.length > 0 && (
-              <ScrollView
-                style={{
-                  height: 150,
-                  width: "100%",
-                  backgroundColor: "#fff",
-                  position: "absolute",
-                  top: 110,
-                  borderRadius: 10,
-                  zIndex: 10,
-                }}
-              >
-                {displayedStreetPropositions}
-              </ScrollView>
-            )}
-          </View>
-          <ScrollView>{displayedAdresses}</ScrollView>
-          <TouchableOpacity
-            style={styles.button_main_features}
-            onPress={() => logout()}
-          >
-            <Text style={styles.text_white}>Se déconnecter</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.button_main_features,
-              { flexDirection: "row", justifyContent: "space-around" },
-            ]}
-            onPress={() => setDarkMode(!darkMode)}
-          >
-            <Text style={styles.text_white}>Mode sombre</Text>
-            {darkMode && (
-              <FontAwesome name="toggle-off" color={"#fff"} size={30} />
-            )}
-            {darkMode || (
-              <FontAwesome name="toggle-on" color={"#fff"} size={30} />
-            )}
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.button_main_features,
-              {
-                backgroundColor: "red",
-              },
-            ]}
-            onPress={() => setEraseAccountModal(!eraseAccountModal)}
-          >
-            <Text style={[styles.text_white, { fontSize: 20 }]}>
-              Supprimer votre compte
-            </Text>
-          </TouchableOpacity>
-          <Modal
-            animationType="slide"
-            transparent={false}
-            visible={eraseAccountModal}
-            onRequestClose={() => {
-              setEraseAccountModal(!eraseAccountModal);
-            }}
-          >
-            <View style={styles.centeredView}>
-              <View style={styles.modalView}>
-                <Text
-                  style={{ color: "#fff", fontSize: 24, textAlign: "center" }}
-                >
-                  Cette étape est définitive, voulez vous supprimer votre
-                  compte?
-                </Text>
-                <TouchableOpacity
-                  style={styles.modalText}
-                  onPress={() => deleteAccount()}
-                >
-                  <Text style={{ color: "red" }}>Suppression du compte</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.button, styles.buttonClose]}
-                  onPress={() => setEraseAccountModal(!eraseAccountModal)}
-                >
-                  <Text style={[styles.textStyle, { color: "black" }]}>
-                    Annuler la suppression
-                  </Text>
-                </TouchableOpacity>
               </View>
-            </View>
-          </Modal>
+              <TouchableOpacity
+                style={{
+                  backgroundColor: "#6C5364",
+                  width: "50%",
+                  height: 60,
+                  borderRadius: 10,
+                  justifyContent: "center",
+                  borderWidth: 2,
+                  borderColor: "#fff",
+                }}
+                onPress={() => navigation.navigate("Login")}
+              >
+                <Text
+                  style={[
+                    styles.text_white,
+                    { fontSize: 18, textAlign: "center" },
+                  ]}
+                >
+                  Retour au menu d'inscription
+                </Text>
+              </TouchableOpacity>
+            </>
+          )}
         </SafeAreaView>
       </SafeAreaProvider>
     </>
@@ -411,7 +469,7 @@ const styles = StyleSheet.create({
   },
   button_main_features: {
     height: 50,
-    width: "100%",
+    width: "80%",
     borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
