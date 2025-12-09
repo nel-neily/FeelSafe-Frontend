@@ -26,7 +26,6 @@ export default function LoginScreen() {
     // Modals
     const [isSigninModal, setSigninModal] = useState(false);
     const [isSignupModal, setSignupModal] = useState(false);
-    const [isGoogleModal, setGoogleModal] = useState(false);
 
     // Fields
     const [email, setEmail] = useState("");
@@ -61,7 +60,6 @@ export default function LoginScreen() {
   
 
   // Call backend 
-
 
   const response = await fetch(`${BACKEND_URL}/users/signin`, {
       method: 'POST',
@@ -156,16 +154,8 @@ export default function LoginScreen() {
   };
 
 
-  // GOOGLE SIGN IN ACTION
-  const handleGoogle = () => {
-    dispatch(addUser(true));
-    setGoogleModal(false);
-    navigation.navigate("TabNavigator", { screen: "Map" });
-  };
-
   // CONTINUE WITHOUT ACCOUNT ACTION
   const handleNoAccount = () => {
-    dispatch(addUser(true));
     navigation.navigate("TabNavigator", { screen: "Map" });
   };
 
@@ -180,10 +170,6 @@ return (
 
       <TouchableOpacity style={styles.button} onPress={() => setSignupModal(true)}>
         <Text style={styles.textButton}>Créer un compte</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={styles.button} onPress={() => setGoogleModal(true)}>
-        <Text style={styles.textButton}>Se connecter avec Google</Text>
       </TouchableOpacity>
 
       <TouchableOpacity onPress={handleNoAccount}>
@@ -335,23 +321,6 @@ return (
         </View>
       </Modal>
 
-
-      {/* --- GOOGLE SIGN IN MODAL --- */}
-      <Modal visible={isGoogleModal} transparent animationType="fade">
-        <View style={styles.modalWrapper}>
-          <View style={styles.modalBox}>
-            <Text style={styles.modalTitle}>Continuer avec Google</Text>
-
-            <TouchableOpacity style={styles.modalButton} onPress={handleGoogle}>
-              <Text style={styles.textButton}>Se connecter avec Google</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity onPress={() => setGoogleModal(false)}>
-              <Text style={styles.close}>Fermer</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </KeyboardAvoidingView>
   );
 }
