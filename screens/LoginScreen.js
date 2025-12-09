@@ -72,7 +72,7 @@ export default function LoginScreen() {
     const data = await response.json();
 
     if (data.user.token) {
-      dispatch(addUser({ email, token: data.token }));
+      dispatch(addUser({ email, token: data.user.token, username: data.user.username, addresses: data.user.addresses }));
 
       // Empty fields after signin
       setEmail("");
@@ -143,9 +143,9 @@ export default function LoginScreen() {
     setSignupModal(false);
     navigation.navigate("TabNavigator", { screen: "Map" });
     } else {
-      setEmail("");
-    setPassword("");
-    setConfirmPassword("");
+     setEmail("");
+     setPassword("");
+     setConfirmPassword("");
       Alerte("Email ou mot de passe incorrect");
           }
         }
@@ -156,7 +156,7 @@ export default function LoginScreen() {
   };
 
 
-  // GOOGLE ACTION
+  // GOOGLE SIGN IN ACTION
   const handleGoogle = () => {
     dispatch(addUser(true));
     setGoogleModal(false);
@@ -336,7 +336,7 @@ return (
       </Modal>
 
 
-      {/* --- GOOGLE MODAL --- */}
+      {/* --- GOOGLE SIGN IN MODAL --- */}
       <Modal visible={isGoogleModal} transparent animationType="fade">
         <View style={styles.modalWrapper}>
           <View style={styles.modalBox}>
