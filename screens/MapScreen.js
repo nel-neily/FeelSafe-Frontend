@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, use } from "react";
 import {
   StyleSheet,
   Dimensions,
@@ -6,8 +6,10 @@ import {
   Text,
   Modal,
   TouchableOpacity,
+  ScrollView,
 } from "react-native";
-import {useDispatch, useSelector} from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import FontAwesome from "react-native-vector-icons/FontAwesome";
 import MapView, { Marker } from "react-native-maps";
 import * as Location from "expo-location";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
@@ -18,17 +20,20 @@ export default function MapScreen() {
   const [marker, setMarker] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedRisk, setSelectedRisk] = useState(null);
+  
   const mapRef = useRef(null);
   const dispatch = useDispatch();
-  const [markersFromDB, setMarkersFromDB] = useState([]);
+  // const [markersFromDB, setMarkersFromDB] = useState([]);
+
+  const markersInStore = useSelector((state) => state.marker.markers);
 
   const fetchMarkers = async () => {
     fetch("http://192.168.100.192:3000/markers")
       .then((res) => res.json())
       .then((data) => {
         if (data.result) {
-          importMarkers
-          setMarkersFromDB(data.markers); // on stocke dans l'état
+          dispatch(importMarkers(data.markers)); // on stocke dans le store
+          // setMarkersFromDB(data.markers); // on stocke dans l'état
         }
       })
       .catch((err) => {
@@ -36,17 +41,16 @@ export default function MapScreen() {
       });
   };
 
-  console.log(markersFromDB, "State");
-  const displayMarkersFromDB = markersFromDB.map((m, index) => {
-    return (
-      <Marker
-        key={index}
-        coordinate={{ latitude: m.latitude, longitude: m.longitude }}
-        pinColor={m.color}
-        title={m.riskType}
-      />
-    );
-  });
+ const displayMarkersFromDB = markersInStore.map((m) => (
+  <Marker
+    key={m._id} //  On utilise l'id unique MongoDB
+    coordinate={{ latitude: m.latitude, longitude: m.longitude }}
+    pinColor={m.color}
+    title={m.riskType}
+    onPress={() => handleMarkerPress(m)} 
+  />
+));
+
 
   useEffect(() => {
     fetchMarkers(); // récupération au montage
@@ -93,9 +97,52 @@ export default function MapScreen() {
   const handleSelectRisk = (risk) => {
     setSelectedRisk(risk); // on enregistre le choix
     setIsModalVisible(false); //  on ferme la modal
-    // Ici, envoyer le marker + risk au backend
-    fetchMarkers();
+
+    if (!marker) return;
+
+    const newMarker = {
+      latitude: marker.latitude,
+      longitude: marker.longitude,
+      riskType: risk,
+      color: "orange", //  temporaire
+      userId: "64a7f4e2b4c2f5d1e4a5b6c7", //  temporaire
+    };
+    fetch("http://192.168.100.192:3000/markers/addmarkers", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newMarker),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.result) {
+          //  rafraîchit la liste des markers dans Redux
+          fetchMarkers();
+        }
+      })
+      .catch((err) => console.log("Erreur ajout marker", err));
+
+    // supprime le marker temporaire
+    setMarker(null);
   };
+
+const handleMarkerPress = (marker) => {
+  if (marker.user !== "64a7f4e2b4c2f5d1e4a5b6c7") { // temporaire
+    return alert("Vous ne pouvez pas supprimer ce signalement");
+  }
+
+  fetch(`http://192.168.100.192:3000/markers/${marker._id}`, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ userId: "64a7f4e2b4c2f5d1e4a5b6c7" }),
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.result) {
+        fetchMarkers(); // Refresh la map
+      }
+    });
+};
+
 
   if (!position) {
     return (
@@ -129,12 +176,6 @@ export default function MapScreen() {
           }}
           onLongPress={handleLongPress}
         >
-          {marker && (
-            <Marker
-              coordinate={marker} // affiche le marker long press
-              title="Nouvelle alerte"
-            />
-          )}
           {displayMarkersFromDB}
         </MapView>
 
@@ -148,23 +189,54 @@ export default function MapScreen() {
           <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
               <Text style={styles.modalTitle}>Type de signalement</Text>
+              
+              <ScrollView
+        style={{ width: "100%", maxHeight: 300 }} // limite la hauteur
+        contentContainerStyle={{ alignItems: "center" }}
+      >
+        {[
+          "Agression",
+          "Vol",
+          "Comportement suspect",
+          "Harcelement",
+          "Bruit suspect",
+          "Zone mal éclairée",
+          "Accident",
+          "Incendie",
+          "Animal dangereux",
+          "Dégradation",
+          "Route endommagée",
+        ].map((risk, index) => (
+          <TouchableOpacity
+            key={index}
+            style={styles.modalButton}
+            onPress={() => handleSelectRisk(risk)}
+          >
+            <Text style={styles.modalButtonText}>{risk}</Text>
+          </TouchableOpacity>
+        ))}
+
+        {/* Tes deux autres options */}
+        <TouchableOpacity
+          style={styles.modalButton}
+          onPress={() => handleSelectRisk("Zone non safe")}
+        >
+          <Text style={styles.modalButtonText}>Zone non Safe</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.modalButton}
+          onPress={() => handleSelectRisk("Autre suggestion")}
+        >
+          <Text style={styles.modalButtonText}>Autre Suggestion</Text>
+        </TouchableOpacity>
+
+      </ScrollView>
+
+              
 
               <TouchableOpacity
-                style={styles.modalButton}
-                onPress={() => handleSelectRisk("Suggestion")} //  choix 1
-              >
-                <Text style={styles.modalButtonText}>Suggestion</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.modalButton}
-                onPress={() => handleSelectRisk("Suggestion")} //  choix 2
-              >
-                <Text style={styles.modalButtonText}>Suggestion</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: "#aaa" }]}
+                style={[styles.modalButton, { backgroundColor: "#fff" }]}
                 onPress={() => setIsModalVisible(false)} //  fermer la modal
               >
                 <Text style={styles.modalButtonText}>Annuler</Text>
@@ -208,7 +280,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   modalButtonText: {
-    color: "#fff",
+    color: "#black",
     fontSize: 16,
     fontWeight: "600",
   },
