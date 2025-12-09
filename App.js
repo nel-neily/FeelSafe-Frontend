@@ -10,9 +10,9 @@ import ProfileScreen from "./screens/ProfileScreen";
 import { Provider } from "react-redux";
 import { configureStore } from "@reduxjs/toolkit";
 import user from "./reducers/user";
-
+import marker from "./reducers/markers";
 const store = configureStore({
-  reducer: { user },
+  reducer: { user, marker },
 });
 
 const Stack = createNativeStackNavigator();
