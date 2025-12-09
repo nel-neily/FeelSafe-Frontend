@@ -3,6 +3,6 @@ import  { Text } from 'react-native';
 export default function ProfileScreen() {
 
     return (
-        <Text>Continuer sur ProfileScreen</Text> 
+        <Text>Poursuivre vers ProfileScreen</Text> 
     )
 }
