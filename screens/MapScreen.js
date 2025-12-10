@@ -7,6 +7,7 @@ import {
   Modal,
   TouchableOpacity,
   ScrollView,
+  Alert,
 } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
@@ -136,7 +137,7 @@ export default function MapScreen() {
 
 const handleMarkerPress = (marker) => {
   if (marker.user !== "64a7f4e2b4c2f5d1e4a5b6c7") { // temporaire
-    return alert("Vous ne pouvez pas supprimer ce signalement");
+    return Alert.alert("Alerte", "Vous ne pouvez pas supprimer ce signalement", [{ text: "OK" }]);
   }
 
   fetch(`http://192.168.100.192:3000/markers/${marker._id}`, {
@@ -284,7 +285,7 @@ const handleMarkerPress = (marker) => {
                         style={styles.favoriteItem}
                         onPress={() => {
                           // --- Pour le moment, on affiche juste l'adresse sélectionnée ---
-                          alert(`Destination sélectionnée: ${address}`);
+                          Alert.alert("Alerte", `Destination sélectionnée: ${address}`, [{ text: "OK" }]);
                           setIsDestinationModal(false);
                         }}
                       >
