@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Image,
   KeyboardAvoidingView,
@@ -15,17 +15,62 @@ import { addUser } from "../reducers/user";
 import { useNavigation } from "@react-navigation/native";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
 import { Alert } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
-
 export default function LoginScreen() {
   const navigation = useNavigation();
   const dispatch = useDispatch();
 
+  const storeData = async (value) => {
+    try {
+      await AsyncStorage.setItem("token", value);
+    } catch (e) {
+      // saving error
+      console.error(e);
+    }
+  };
+
+  const getData = async () => {
+    try {
+      const value = await AsyncStorage.getItem("token");
+      if (value !== null) {
+        // value previously stored
+        return value;
+      } else {
+        return null;
+      }
+    } catch (e) {
+      // error reading value
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+    (async () => {
+      const token = await getData();
+      if (!token) return;
+      const response = await fetch(
+        `${BACKEND_URL}/users/auto-signin/${token}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      const data = await response.json();
+
+      if (!data.result) return;
+
+      dispatch(addUser(data.user));
+      storeData(data.user.token);
+      navigation.navigate("TabNavigator");
+    })();
+  }, []);
   // Modals
   const [isSigninModal, setSigninModal] = useState(false);
   const [isSignupModal, setSignupModal] = useState(false);
-  const [isGoogleModal, setGoogleModal] = useState(false);
 
   // Fields
   const [email, setEmail] = useState("");
@@ -76,6 +121,8 @@ export default function LoginScreen() {
           })
         );
 
+        await storeData(data.user.token);
+
         // Empty fields after signin
         setEmail("");
         setPassword("");
@@ -90,6 +137,8 @@ export default function LoginScreen() {
     } catch (error) {
       console.error(error);
       Alerte("Erreur lors de la connexion");
+      setEmail("");
+      setPassword("");
     }
   };
 
@@ -139,6 +188,8 @@ export default function LoginScreen() {
           })
         );
 
+        await storeData(data.user.token);
+
         // Empty fields after signup
         setEmail("");
         setPassword("");
@@ -155,9 +206,11 @@ export default function LoginScreen() {
     } catch (error) {
       console.error(error);
       Alerte("Erreur lors de la connexion");
+      setEmail("");
+      setPassword("");
+      setConfirmPassword("");
     }
   };
-
 
   // CONTINUE WITHOUT ACCOUNT ACTION
   const handleNoAccount = () => {
@@ -325,7 +378,6 @@ export default function LoginScreen() {
           </View>
         </View>
       </Modal>
-
     </KeyboardAvoidingView>
   );
 }

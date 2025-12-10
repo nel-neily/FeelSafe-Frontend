@@ -15,6 +15,9 @@ import { useEffect, useState, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { updateUser, logoutUser } from "../reducers/user";
 import { Alert } from "react-native";
+
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 export default function ProfileScreen({ navigation }) {
   // GLOBALS VARIABLES
 
@@ -192,10 +195,19 @@ export default function ProfileScreen({ navigation }) {
   }, [newAdress]);
 
   //   GESTION DE LA DECONNECTION
+  const removeValue = async () => {
+    try {
+      await AsyncStorage.removeItem("token");
+    } catch (e) {
+      console.error(e);
+      // remove error
+    }
 
-  const logout = () => {
+    console.log("Done.");
+  };
+  const logout = async () => {
     dispatch(logoutUser());
-    navigation.navigate("Login");
+    await removeValue().then(() => navigation.navigate("Login"));
   };
 
   //   GESTION DE LA SUPPRESSION DE COMPTE
