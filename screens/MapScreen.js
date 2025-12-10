@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
+  TextInput,
 } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
@@ -28,11 +29,16 @@ export default function MapScreen() {
   const [addressPropositions, setAddressPropositions] = useState([]);
   
   const mapRef = useRef(null);
-  const dispatch = useDispatch();
+
+ 
   // const [markersFromDB, setMarkersFromDB] = useState([]);
 
   const markersInStore = useSelector((state) => state.marker.markers);
   const user = useSelector((state) => state.user.value);
+
+   // --- Pour le debounce de Destination ---
+  const debounceTimer = useRef(null);
+  const dispatch = useDispatch();
   
   // --- Récupération des adresses favorites (vide si pas de compte) ---
   const favoriteAddresses = user.addresses || [];
@@ -95,6 +101,62 @@ export default function MapScreen() {
       }
     })();
   }, []);
+
+  // --- Fonction pour récupérer les adresses depuis l'API - Reprise de ProfileScreen.js ---
+  const fetchAddresses = async (address) => {
+    if (!address || address.trim() === "") {
+      return;
+    }
+    try {
+      const response = await fetch(
+        `https://data.geopf.fr/geocodage/search?q=${encodeURIComponent(
+          address
+        )}`
+      );
+      const data = await response.json();
+      const allFeatures = data.features || [];
+      const streetsNames = allFeatures.map((feature) => {
+        const { housenumber, street, city, postcode } = feature.properties;
+        return {
+          housenumber,
+          street,
+          city,
+          postcode,
+        };
+      });
+      setAddressPropositions(streetsNames);
+    } catch (error) {
+      console.error("Erreur lors de la récupération des adresses:", error);
+      setAddressPropositions([]);
+    }
+  };
+
+  // --- useEffect avec debounce pour l'API - Repris de ProfileScreen.js ---
+  useEffect(() => {
+    // Nettoyer le timer précédent s'il existe
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+    }
+
+    // Si l'adresse est vide, réinitialiser les propositions
+    if (!destinationInput || destinationInput.trim() === "") {
+      setAddressPropositions([]);
+      return;
+    }
+
+    // Créer un nouveau timer (réduit à 500ms)
+    debounceTimer.current = setTimeout(() => {
+      fetchAddresses(destinationInput);
+    }, 500);
+
+    // Cleanup: annuler le timer si le composant se démonte ou si destinationInput change
+    return () => {
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+    };
+    // Le useEffect se déclenche à chaque nouvelle frappe du user
+  }, [destinationInput]);
 
   // Fonction marker long press
   const handleLongPress = (event) => {
@@ -267,11 +329,45 @@ const handleMarkerPress = (marker) => {
             <View style={styles.modalContent}>
               <Text style={styles.modalTitle}>Choisir une destination</Text>
               
-              {/* <Text style={styles.sectionTitle}>Votre destination</Text> */}
+              {/* Input de recherche d'adresse */}
               <View style={styles.inputContainer}>
                 <FontAwesome name="search" size={20} color="#666" />
-                <Text style={styles.inputPlaceholder}>Saisissez une adresse...</Text>
+                <TextInput
+                  placeholder="Saisissez une adresse..."
+                  placeholderTextColor="#999"
+                  style={styles.textInput}
+                  value={destinationInput}
+                  onChangeText={(value) => setDestinationInput(value)}
+                />
               </View>
+
+              {/* --- Propositions de l'API - Reprise de ProfileScreen.js --- */}
+              {addressPropositions.length > 0 && (
+                <ScrollView style={styles.propositionsContainer}>
+                  {addressPropositions.map((adresse, i) => {
+                    const combinedAdress = `${adresse.housenumber ? adresse.housenumber : ""} ${
+                      adresse.street
+                    } - ${adresse.city} - ${adresse.postcode}`;
+                    const formattedAdress =
+                      combinedAdress.length > 45 ? combinedAdress.slice(0, 45) : combinedAdress;
+                    return (
+                      <TouchableOpacity
+                        key={i}
+                        style={styles.propositionItem}
+                        onPress={() => {
+                          Alert.alert("Alerte", `Destination sélectionnée: ${formattedAdress}`, [{ text: "OK" }]);
+                          setDestinationInput("");
+                          setAddressPropositions([]);
+                          setIsDestinationModal(false);
+                        }}
+                      >
+                        <FontAwesome name="map-marker" size={16} color="#ec6e5b" />
+                        <Text style={styles.propositionText}>{formattedAdress}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              )}
 
               {/* --- Section Adresses favorites --- */}
               <View style={{ width: "100%", marginTop: 20 }}>
@@ -404,6 +500,37 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 12,
     backgroundColor: "#f9f9f9",
+  },
+  textInput: {
+    flex: 1,
+    marginLeft: 10,
+    fontSize: 15,
+    color: "#333",
+  },
+  // --- Styles pour les propositions de l'API ---
+  propositionsContainer: {
+    width: "100%",
+    minHeight: 100,
+    maxHeight: 200,
+    marginTop: 10,
+    marginBottom: 10,
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: "#ec6e5b",
+  },
+  propositionItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+    gap: 10,
+  },
+  propositionText: {
+    flex: 1,
+    fontSize: 14,
+    color: "#333",
   },
   inputPlaceholder: {
     marginLeft: 10,
