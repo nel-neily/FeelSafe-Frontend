@@ -27,6 +27,7 @@ export default function MapScreen() {
   const [isDestinationModal, setIsDestinationModal] = useState(false);
   const [destinationInput, setDestinationInput] = useState("");
   const [addressPropositions, setAddressPropositions] = useState([]);
+  const [destinationMarker, setDestinationMarker] = useState(null); // Coordonnées de la destination
   
   const mapRef = useRef(null);
 
@@ -42,6 +43,7 @@ export default function MapScreen() {
   
   // --- Récupération des adresses favorites (vide si pas de compte) ---
   const favoriteAddresses = user.addresses || [];
+
 
   const fetchMarkers = async () => {
     fetch("http://192.168.100.192:3000/markers")
@@ -102,6 +104,7 @@ export default function MapScreen() {
     })();
   }, []);
 
+
   // --- Fonction pour récupérer les adresses depuis l'API - Reprise de ProfileScreen.js ---
   const fetchAddresses = async (address) => {
     if (!address || address.trim() === "") {
@@ -117,11 +120,14 @@ export default function MapScreen() {
       const allFeatures = data.features || [];
       const streetsNames = allFeatures.map((feature) => {
         const { housenumber, street, city, postcode } = feature.properties;
+        const [longitude, latitude] = feature.geometry.coordinates; // L'API retourne [longitude, latitude]
         return {
           housenumber,
           street,
           city,
           postcode,
+          latitude,
+          longitude,
         };
       });
       setAddressPropositions(streetsNames);
@@ -157,6 +163,49 @@ export default function MapScreen() {
     };
     // Le useEffect se déclenche à chaque nouvelle frappe du user
   }, [destinationInput]);
+
+  // --- Fonction pour centrer la carte sur une destination ---
+  const goToDestination = (latitude, longitude) => {
+    if (!latitude || !longitude) {
+      Alert.alert("Erreur", "Coordonnées de la destination introuvables", [{ text: "OK" }]);
+      return;
+    }
+    
+    // Enregistrer le marqueur de destination
+    setDestinationMarker({ latitude, longitude });
+    
+    // Centrer la carte sur la destination
+    mapRef.current?.animateToRegion({
+      latitude,
+      longitude,
+      latitudeDelta: 0.01,
+      longitudeDelta: 0.01,
+    }, 1000); // Animation de 1 seconde
+    
+    // Fermer la modale
+    setDestinationInput("");
+    setAddressPropositions([]);
+    setIsDestinationModal(false);
+  };
+
+  // --- Fonction pour géolocaliser une adresse favorite de destination et se positionner directement dessus ---
+  const goToFavoriteAddress = async (address) => {
+    try {
+      const response = await fetch(
+        `https://data.geopf.fr/geocodage/search?q=${encodeURIComponent(address)}&limit=1`
+      );
+      const data = await response.json();
+      if (data.features && data.features.length > 0) {
+        const [longitude, latitude] = data.features[0].geometry.coordinates;
+        goToDestination(latitude, longitude, address);
+      } else {
+        Alert.alert("Erreur", "Impossible de localiser cette adresse", [{ text: "OK" }]);
+      }
+    } catch (error) {
+      console.error("Erreur géolocalisation adresse favorite:", error);
+      Alert.alert("Erreur", "Une erreur est survenue", [{ text: "OK" }]);
+    }
+  };
 
   // Fonction marker long press
   const handleLongPress = (event) => {
@@ -249,6 +298,18 @@ const handleMarkerPress = (marker) => {
           onLongPress={handleLongPress}
         >
           {displayMarkersFromDB}
+          
+          {/* --- Marqueur de destination --- */}
+          {destinationMarker && (
+            <Marker
+              coordinate={{
+                latitude: destinationMarker.latitude,
+                longitude: destinationMarker.longitude,
+              }}
+              pinColor="blue"
+              title="Destination"
+            />
+          )}
         </MapView>
 
         {/*  Modal de signalement */}
@@ -354,12 +415,7 @@ const handleMarkerPress = (marker) => {
                       <TouchableOpacity
                         key={i}
                         style={styles.propositionItem}
-                        onPress={() => {
-                          Alert.alert("Alerte", `Destination sélectionnée: ${formattedAdress}`, [{ text: "OK" }]);
-                          setDestinationInput("");
-                          setAddressPropositions([]);
-                          setIsDestinationModal(false);
-                        }}
+                        onPress={() => goToDestination(adresse.latitude, adresse.longitude, formattedAdress)}
                       >
                         <FontAwesome name="map-marker" size={16} color="#ec6e5b" />
                         <Text style={styles.propositionText}>{formattedAdress}</Text>
@@ -379,11 +435,7 @@ const handleMarkerPress = (marker) => {
                       <TouchableOpacity
                         key={index}
                         style={styles.favoriteItem}
-                        onPress={() => {
-                          // --- Pour le moment, on affiche juste l'adresse sélectionnée ---
-                          Alert.alert("Alerte", `Destination sélectionnée: ${address}`, [{ text: "OK" }]);
-                          setIsDestinationModal(false);
-                        }}
+                        onPress={() => goToFavoriteAddress(address)}
                       >
                         <FontAwesome name="location-arrow" size={18} color="#ec6e5b" />
                         <Text style={styles.favoriteText}>{address}</Text>
