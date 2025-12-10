@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, use } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   StyleSheet,
   Dimensions,
@@ -9,7 +9,6 @@ import {
   ScrollView,
 } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
-import FontAwesome from "react-native-vector-icons/FontAwesome";
 import MapView, { Marker } from "react-native-maps";
 import * as Location from "expo-location";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
@@ -20,12 +19,11 @@ export default function MapScreen() {
   const [marker, setMarker] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedRisk, setSelectedRisk] = useState(null);
-  
+  const [selectedMarker, setSelectedMarker] = useState(null);
   const mapRef = useRef(null);
   const dispatch = useDispatch();
-  // const [markersFromDB, setMarkersFromDB] = useState([]);
-
   const markersInStore = useSelector((state) => state.marker.markers);
+  const user = useSelector((state) => state.user.value);
 
   const fetchMarkers = async () => {
     fetch("http://192.168.100.192:3000/markers")
@@ -41,17 +39,17 @@ export default function MapScreen() {
       });
   };
 
- const displayMarkersFromDB = markersInStore.map((m) => (
-  <Marker
-    key={m._id} //  On utilise l'id unique MongoDB
-    coordinate={{ latitude: m.latitude, longitude: m.longitude }}
-    pinColor={m.color}
-    title={m.riskType}
-    onPress={() => handleMarkerPress(m)} 
-  />
-));
-
-
+  const displayMarkersFromDB = markersInStore.map((m) => (
+    <Marker
+      key={m._id} //  On utilise l'id unique MongoDB
+      coordinate={{ latitude: m.latitude, longitude: m.longitude }}
+      pinColor={m.color}
+      title={m.riskType}
+      onPress={(e) => setSelectedMarker(m)}
+      onDeselect={() => setSelectedMarker(null)}
+    />
+  ));
+  console.log(selectedMarker, user._id);
   useEffect(() => {
     fetchMarkers(); // récupération au montage
   }, []);
@@ -105,7 +103,7 @@ export default function MapScreen() {
       longitude: marker.longitude,
       riskType: risk,
       color: "orange", //  temporaire
-      userId: "64a7f4e2b4c2f5d1e4a5b6c7", //  temporaire
+      userId: "6939368e4b25e76a7a1cd25d", //  temporaire
     };
     fetch("http://192.168.100.192:3000/markers/addmarkers", {
       method: "POST",
@@ -122,27 +120,28 @@ export default function MapScreen() {
       .catch((err) => console.log("Erreur ajout marker", err));
 
     // supprime le marker temporaire
-    setMarker(null);
+    // setMarker(null);
   };
 
-const handleMarkerPress = (marker) => {
-  if (marker.user !== "64a7f4e2b4c2f5d1e4a5b6c7") { // temporaire
-    return alert("Vous ne pouvez pas supprimer ce signalement");
-  }
+  const handleMarkerPress = (marker) => {
+    if (marker.user !== user.token) {
+      // temporaire
+      return alert("Vous ne pouvez pas supprimer ce signalement");
+    }
 
-  fetch(`http://192.168.100.192:3000/markers/${marker._id}`, {
-    method: "DELETE",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ userId: "64a7f4e2b4c2f5d1e4a5b6c7" }),
-  })
-    .then((res) => res.json())
-    .then((data) => {
-      if (data.result) {
-        fetchMarkers(); // Refresh la map
-      }
-    });
-};
-
+    fetch(`http://192.168.100.192:3000/markers/${marker._id}`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: user.token }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.result) {
+          fetchMarkers(); // Refresh la map
+          setSelectedMarker(null); // ferme le popup
+        }
+      });
+  };
 
   if (!position) {
     return (
@@ -179,6 +178,40 @@ const handleMarkerPress = (marker) => {
           {displayMarkersFromDB}
         </MapView>
 
+        {selectedMarker && (
+          <Modal
+            animationType="fade"
+            transparent={true}
+            visible={true}
+            onRequestClose={() => setSelectedMarker(null)}
+          >
+            <View style={styles.deleteModalContainer}>
+              <View style={styles.deleteModal}>
+                <Text style={styles.modalTitle}>{selectedMarker.riskType}</Text>
+
+                {selectedMarker.user === "64a7f4e2b4c2f5d1e4a5b6c7" && (
+                  <TouchableOpacity
+                    style={styles.deleteButton}
+                    onPress={() => handleMarkerPress(selectedMarker)}
+                  >
+                    <Text style={{ color: "white", fontSize: 18 }}>
+                      {" "}
+                      Supprimer
+                    </Text>
+                  </TouchableOpacity>
+                )}
+
+                <TouchableOpacity
+                  style={[styles.modalButton, { backgroundColor: "gray" }]}
+                  onPress={() => setSelectedMarker(null)}
+                >
+                  <Text style={{ color: "white" }}>Fermer</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Modal>
+        )}
+
         {/*  Modal de signalement */}
         <Modal
           transparent={true} //  fond transparent derrière la modal
@@ -189,51 +222,33 @@ const handleMarkerPress = (marker) => {
           <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
               <Text style={styles.modalTitle}>Type de signalement</Text>
-              
+
               <ScrollView
-        style={{ width: "100%", maxHeight: 300 }} // limite la hauteur
-        contentContainerStyle={{ alignItems: "center" }}
-      >
-        {[
-          "Agression",
-          "Vol",
-          "Comportement suspect",
-          "Harcelement",
-          "Bruit suspect",
-          "Zone mal éclairée",
-          "Accident",
-          "Incendie",
-          "Animal dangereux",
-          "Dégradation",
-          "Route endommagée",
-        ].map((risk, index) => (
-          <TouchableOpacity
-            key={index}
-            style={styles.modalButton}
-            onPress={() => handleSelectRisk(risk)}
-          >
-            <Text style={styles.modalButtonText}>{risk}</Text>
-          </TouchableOpacity>
-        ))}
-
-        {/* Tes deux autres options */}
-        <TouchableOpacity
-          style={styles.modalButton}
-          onPress={() => handleSelectRisk("Zone non safe")}
-        >
-          <Text style={styles.modalButtonText}>Zone non Safe</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.modalButton}
-          onPress={() => handleSelectRisk("Autre suggestion")}
-        >
-          <Text style={styles.modalButtonText}>Autre Suggestion</Text>
-        </TouchableOpacity>
-
-      </ScrollView>
-
-              
+                style={{ width: "100%", maxHeight: 300 }} // limite la hauteur
+                contentContainerStyle={{ alignItems: "center" }}
+              >
+                {[
+                  "Agression",
+                  "Vol",
+                  "Comportement suspect",
+                  "Harcelement",
+                  "Bruit suspect",
+                  "Zone mal éclairée",
+                  "Accident",
+                  "Incendie",
+                  "Animal dangereux",
+                  "Dégradation",
+                  "Route endommagée",
+                ].map((risk, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={styles.modalButton}
+                    onPress={() => handleSelectRisk(risk)}
+                  >
+                    <Text style={styles.modalButtonText}>{risk}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
 
               <TouchableOpacity
                 style={[styles.modalButton, { backgroundColor: "#fff" }]}
@@ -280,8 +295,27 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   modalButtonText: {
-    color: "#black",
+    color: "#000000",
     fontSize: 16,
     fontWeight: "600",
+  },
+  deleteModalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.4)",
+  },
+  deleteModal: {
+    width: "75%",
+    backgroundColor: "white",
+    padding: 20,
+    borderRadius: 15,
+    alignItems: "center",
+  },
+  deleteButton: {
+    backgroundColor: "red",
+    padding: 10,
+    borderRadius: 10,
+    marginVertical: 10,
   },
 });
