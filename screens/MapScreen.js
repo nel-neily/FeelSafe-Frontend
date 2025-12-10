@@ -21,6 +21,11 @@ export default function MapScreen() {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedRisk, setSelectedRisk] = useState(null);
   
+  // --- États pour les destinations ---
+  const [isDestinationModal, setIsDestinationModal] = useState(false);
+  const [destinationInput, setDestinationInput] = useState("");
+  const [addressPropositions, setAddressPropositions] = useState([]);
+  
   const mapRef = useRef(null);
   const dispatch = useDispatch();
   // const [markersFromDB, setMarkersFromDB] = useState([]);
@@ -244,10 +249,57 @@ const handleMarkerPress = (marker) => {
             </View>
           </View>
         </Modal>
+
+
+        {/* --- Modale Destination --- */}
+        <Modal
+          transparent={true}
+          animationType="slide"
+          visible={isDestinationModal}
+          onRequestClose={() => setIsDestinationModal(false)}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Choisir une destination</Text>
+              
+              <Text style={styles.sectionTitle}>Votre destination</Text>
+              <View style={styles.inputContainer}>
+                <FontAwesome name="search" size={20} color="#666" />
+                <Text style={styles.inputPlaceholder}>Saisissez une adresse...</Text>
+              </View>
+
+              <Text style={styles.sectionTitle}>Vos adresses favorites</Text>
+              <View style={styles.favoritesPlaceholder}>
+                <Text style={styles.placeholderText}>
+                  Les adresses favorites apparaîtront ici
+                </Text>
+              </View>
+
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: "#6C5364", marginTop: 20 }]}
+                onPress={() => setIsDestinationModal(false)}
+              >
+                <Text style={[styles.modalButtonText, { color: "#fff" }]}>Fermer</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
+        {/* --- Bouton Destination "+" --- */}
+        <TouchableOpacity
+          style={styles.floatingButton}
+          onPress={() => setIsDestinationModal(true)}
+        >
+          <FontAwesome name="plus" size={30} color="#fff" />
+        </TouchableOpacity>
       </SafeAreaView>
     </SafeAreaProvider>
   );
 }
+
+
+
+
 
 const styles = StyleSheet.create({
   map: {
@@ -258,18 +310,21 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   modalContent: {
-    width: "80%",
+    width: "85%",
+    maxHeight: "80%",
     backgroundColor: "white",
-    borderRadius: 10,
+    borderRadius: 15,
     padding: 20,
     alignItems: "center",
   },
   modalTitle: {
-    fontSize: 18,
-    marginBottom: 15,
+    fontSize: 20,
+    marginBottom: 20,
     fontWeight: "bold",
+    color: "#333",
   },
   modalButton: {
     backgroundColor: "#ec6e5b",
@@ -283,5 +338,58 @@ const styles = StyleSheet.create({
     color: "#black",
     fontSize: 16,
     fontWeight: "600",
+  },
+  // --- Styles pour le bouton Destination "+" ---
+  floatingButton: {
+    position: "absolute",
+    bottom: 30,
+    right: 20,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: "#ec6e5b",
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+  // --- Styles pour la modale Destination ---
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+    alignSelf: "flex-start",
+    marginTop: 15,
+    marginBottom: 10,
+  },
+  inputContainer: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 10,
+    padding: 12,
+    backgroundColor: "#f9f9f9",
+  },
+  inputPlaceholder: {
+    marginLeft: 10,
+    color: "#999",
+    fontSize: 15,
+  },
+  favoritesPlaceholder: {
+    width: "100%",
+    padding: 20,
+    backgroundColor: "#f0f0f0",
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  placeholderText: {
+    color: "#666",
+    fontSize: 14,
+    textAlign: "center",
   },
 });
