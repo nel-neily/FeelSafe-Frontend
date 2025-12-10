@@ -262,16 +262,16 @@ const handleMarkerPress = (marker) => {
             <View style={styles.modalContent}>
               <Text style={styles.modalTitle}>Choisir une destination</Text>
               
-              <Text style={styles.sectionTitle}>Votre destination</Text>
+              {/* <Text style={styles.sectionTitle}>Votre destination</Text> */}
               <View style={styles.inputContainer}>
                 <FontAwesome name="search" size={20} color="#666" />
                 <Text style={styles.inputPlaceholder}>Saisissez une adresse...</Text>
               </View>
 
-              <Text style={styles.sectionTitle}>Vos adresses favorites</Text>
-              <View style={styles.favoritesPlaceholder}>
+              {/* <Text style={styles.sectionTitle}>Vos adresses favorites</Text> */}
+              <View style={[styles.favoritesPlaceholder, { marginTop: 20 }]}>
                 <Text style={styles.placeholderText}>
-                  Les adresses favorites apparaîtront ici
+                  Vos adresses favorites
                 </Text>
               </View>
 
