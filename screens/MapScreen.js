@@ -31,6 +31,10 @@ export default function MapScreen() {
   // const [markersFromDB, setMarkersFromDB] = useState([]);
 
   const markersInStore = useSelector((state) => state.marker.markers);
+  const user = useSelector((state) => state.user.value);
+  
+  // --- Récupération des adresses favorites (vide si pas de compte) ---
+  const favoriteAddresses = user.addresses || [];
 
   const fetchMarkers = async () => {
     fetch("http://192.168.100.192:3000/markers")
@@ -268,11 +272,36 @@ const handleMarkerPress = (marker) => {
                 <Text style={styles.inputPlaceholder}>Saisissez une adresse...</Text>
               </View>
 
-              {/* <Text style={styles.sectionTitle}>Vos adresses favorites</Text> */}
-              <View style={[styles.favoritesPlaceholder, { marginTop: 20 }]}>
-                <Text style={styles.placeholderText}>
-                  Vos adresses favorites
-                </Text>
+              {/* --- Section Adresses favorites --- */}
+              <View style={{ width: "100%", marginTop: 20 }}>
+                <Text style={styles.sectionTitle}>Vos adresses favorites</Text>
+                
+                {favoriteAddresses.length > 0 ? (
+                  <ScrollView style={{ maxHeight: 150 }}>
+                    {favoriteAddresses.map((address, index) => (
+                      <TouchableOpacity
+                        key={index}
+                        style={styles.favoriteItem}
+                        onPress={() => {
+                          // --- Pour le moment, on affiche juste l'adresse sélectionnée ---
+                          alert(`Destination sélectionnée: ${address}`);
+                          setIsDestinationModal(false);
+                        }}
+                      >
+                        <FontAwesome name="location-arrow" size={18} color="#ec6e5b" />
+                        <Text style={styles.favoriteText}>{address}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                ) : (
+                  <View style={styles.favoritesPlaceholder}>
+                    <Text style={styles.placeholderText}>
+                      {user.token 
+                        ? "Aucune adresse favorite enregistrée" 
+                        : "Connectez-vous pour accéder à vos adresses favorites"}
+                    </Text>
+                  </View>
+                )}
               </View>
 
               <TouchableOpacity
@@ -386,6 +415,20 @@ const styles = StyleSheet.create({
     backgroundColor: "#f0f0f0",
     borderRadius: 10,
     alignItems: "center",
+  },
+  // --- Styles pour les adresses favorites ---
+  favoriteItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+    gap: 10,
+  },
+  favoriteText: {
+    flex: 1,
+    fontSize: 14,
+    color: "#333",
   },
   placeholderText: {
     color: "#666",
