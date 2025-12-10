@@ -49,7 +49,6 @@ export default function MapScreen() {
       onDeselect={() => setSelectedMarker(null)}
     />
   ));
-  console.log(selectedMarker, user._id);
   useEffect(() => {
     fetchMarkers(); // récupération au montage
   }, []);
