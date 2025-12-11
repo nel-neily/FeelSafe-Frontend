@@ -490,22 +490,23 @@ export default function MapScreen() {
                   </TouchableOpacity>
                 ))}
               </ScrollView>
+              
               <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: "#f2f2f2" }]}
+                style={styles.otherButton}
                 onPress={() => {
                   setIsModalVisible(false);
                   setIsCustomRiskModal(true);
                 }}
               >
-                <Text style={styles.modalButtonText}>
+                <Text style={styles.otherButtonText}>
                   Autre signalement
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: "#6C5364" }]}
-                onPress={() => setIsModalVisible(false)} //  fermer la modal
+                style={styles.cancelButton}
+                onPress={() => setIsModalVisible(false)}
               >
-                <Text style={[styles.modalButtonText, { color: "#fff" }]}>Annuler</Text>
+                <Text style={styles.cancelButtonText}>Annuler</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -1003,6 +1004,36 @@ const styles = StyleSheet.create({
   dangerLowText: {
     color: "#333",
     fontSize: 14, 
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  // --- Styles pour les boutons Autre signalement et Annuler ---
+  otherButton: {
+    backgroundColor: "#f2f2f2",
+    padding: 10, 
+    borderRadius: 8,
+    marginVertical: 4,
+    marginTop: 10,
+    width: "100%",
+    alignItems: "center",
+  },
+  otherButtonText: {
+    color: "#333",
+    fontSize: 15,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  cancelButton: {
+    backgroundColor: "#6C5364", 
+    padding: 10, 
+    borderRadius: 8,
+    marginVertical: 4,
+    width: "100%",
+    alignItems: "center",
+  },
+  cancelButtonText: {
+    color: "#fff",
+    fontSize: 15,
     fontWeight: "600",
     textAlign: "center",
   },
