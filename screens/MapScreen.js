@@ -24,6 +24,8 @@ export default function MapScreen() {
   const dispatch = useDispatch();
   const markersInStore = useSelector((state) => state.marker.markers);
   const user = useSelector((state) => state.user.value);
+  const [isLevelModalVisible, setIsLevelModalVisible] = useState(false);
+  const [selectedRiskLevel, setSelectedRiskLevel] = useState(null);
 
   const fetchMarkers = async () => {
     fetch("http://192.168.100.192:3000/markers")
@@ -39,16 +41,19 @@ export default function MapScreen() {
       });
   };
 
-  const displayMarkersFromDB = markersInStore.map((m) => (
-    <Marker
-      key={m._id} //  On utilise l'id unique MongoDB
-      coordinate={{ latitude: m.latitude, longitude: m.longitude }}
-      pinColor={m.color}
-      title={m.riskType}
-      onPress={(e) => setSelectedMarker(m)}
-      onDeselect={() => setSelectedMarker(null)}
-    />
-  ));
+  const displayMarkersFromDB = markersInStore.map((m) => {
+    return (
+      <Marker
+        key={m._id} //  On utilise l'id unique MongoDB
+        coordinate={{ latitude: m.latitude, longitude: m.longitude }}
+        pinColor={m.color}
+        title={m.riskType}
+        onPress={(e) => setSelectedMarker(m)}
+        onDeselect={() => setSelectedMarker(null)}
+      />
+    );
+  });
+
   useEffect(() => {
     fetchMarkers(); // récupération au montage
   }, []);
@@ -94,6 +99,7 @@ export default function MapScreen() {
   const handleSelectRisk = (risk) => {
     setSelectedRisk(risk); // on enregistre le choix
     setIsModalVisible(false); //  on ferme la modal
+    setIsLevelModalVisible(true); // on ouvre la modal niveau de risque
 
     if (!marker) return;
 
@@ -102,7 +108,7 @@ export default function MapScreen() {
       longitude: marker.longitude,
       riskType: risk,
       color: "orange", //  temporaire
-      userId: "6939368e4b25e76a7a1cd25d", //  temporaire
+      userId: user.id,
     };
     fetch("http://192.168.100.192:3000/markers/addmarkers", {
       method: "POST",
@@ -123,7 +129,7 @@ export default function MapScreen() {
   };
 
   const handleMarkerPress = (marker) => {
-    if (marker.user !== user.token) {
+    if (marker.users._id !== user.id) {
       // temporaire
       return alert("Vous ne pouvez pas supprimer ce signalement");
     }
@@ -131,7 +137,7 @@ export default function MapScreen() {
     fetch(`http://192.168.100.192:3000/markers/${marker._id}`, {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: user.token }),
+      body: JSON.stringify({ userId: user.id }),
     })
       .then((res) => res.json())
       .then((data) => {
@@ -156,6 +162,35 @@ export default function MapScreen() {
       />
     );
   }
+
+const handleSelectLevel = (level) => {
+  setSelectedRiskLevel(level);
+  setIsLevelModalVisible(false);
+
+  if (!marker || !user.id) return;
+
+  const newMarker = {
+    latitude: marker.latitude,
+    longitude: marker.longitude,
+    riskType: selectedRisk,
+    color: level === 1 ? "green" : level === 2 ? "orange" : "red",
+    userId: user.id,
+  };
+
+  fetch("http://192.168.100.192:3000/markers/addmarkers", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(newMarker),
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.result) {
+        fetchMarkers();
+      }
+    })
+    .catch((err) => console.log("Erreur ajout marker", err));
+};
+
 
   return (
     <SafeAreaProvider>
@@ -188,7 +223,7 @@ export default function MapScreen() {
               <View style={styles.deleteModal}>
                 <Text style={styles.modalTitle}>{selectedMarker.riskType}</Text>
 
-                {selectedMarker.user === "64a7f4e2b4c2f5d1e4a5b6c7" && (
+                {selectedMarker.users._id === user.id && (
                   <TouchableOpacity
                     style={styles.deleteButton}
                     onPress={() => handleMarkerPress(selectedMarker)}
@@ -209,7 +244,43 @@ export default function MapScreen() {
               </View>
             </View>
           </Modal>
+
         )}
+
+<Modal
+  transparent={true}
+  animationType="fade"
+  visible={isLevelModalVisible}
+  onRequestClose={() => setIsLevelModalVisible(false)}
+>
+  <View style={styles.levelModalContainer}>
+    <View style={styles.levelModal}>
+      <Text style={styles.modalTitle}>Niveau de danger</Text>
+      <View style={{ flexDirection: "row", justifyContent: "space-around", width: "100%" }}>
+        
+        <TouchableOpacity onPress={() => handleSelectLevel(1)}>
+          <View style={[styles.levelCircle, { backgroundColor: "green" }]} />
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => handleSelectLevel(2)}>
+          <View style={[styles.levelCircle, { backgroundColor: "orange" }]} />
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => handleSelectLevel(3)}>
+          <View style={[styles.levelCircle, { backgroundColor: "red" }]} />
+        </TouchableOpacity>
+
+      </View>
+
+      <TouchableOpacity
+        style={[styles.modalButton, { backgroundColor: "#ccc", marginTop: 20 }]}
+        onPress={() => setIsLevelModalVisible(false)}
+      >
+        <Text style={{ color: "black" }}>Annuler</Text>
+      </TouchableOpacity>
+    </View>
+  </View>
+</Modal>
 
         {/*  Modal de signalement */}
         <Modal
@@ -317,4 +388,23 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginVertical: 10,
   },
+  levelModalContainer: {
+  flex: 1,
+  justifyContent: "center",
+  alignItems: "center",
+  backgroundColor: "rgba(0,0,0,0.4)",
+},
+levelModal: {
+  width: "70%",
+  backgroundColor: "white",
+  padding: 20,
+  borderRadius: 15,
+  alignItems: "center",
+},
+levelCircle: {
+  width: 50,
+  height: 50,
+  borderRadius: 25,
+  marginHorizontal: 10,
+},
 });

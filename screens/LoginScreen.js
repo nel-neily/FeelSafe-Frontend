@@ -112,14 +112,7 @@ export default function LoginScreen() {
       const data = await response.json();
 
       if (data.user.token) {
-        dispatch(
-          addUser({
-            email,
-            token: data.user.token,
-            username: data.user.username,
-            addresses: data.user.addresses,
-          })
-        );
+        dispatch(addUser(data.user));
 
         await storeData(data.user.token);
 
@@ -179,14 +172,7 @@ export default function LoginScreen() {
       const data = await response.json();
 
       if (data.user.token) {
-        dispatch(
-          addUser({
-            email,
-            username: data.user.username,
-            token: data.user.token,
-            addresses: data.user.addresses,
-          })
-        );
+        dispatch(addUser(data.user));
 
         await storeData(data.user.token);
 
