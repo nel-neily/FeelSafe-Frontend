@@ -71,11 +71,15 @@ export default function MapScreen() {
       <Marker
         key={m._id} //  On utilise l'id unique MongoDB
         coordinate={{ latitude: m.latitude, longitude: m.longitude }}
-        pinColor={m.color}
         title={m.riskType}
         onPress={(e) => setSelectedMarker(m)}
         onDeselect={() => setSelectedMarker(null)}
-      />
+        tracksViewChanges={false}
+      >
+        <View style={{ alignItems: "center" }}>
+          <FontAwesome name="exclamation" size={50} color={m.color} />
+        </View>
+      </Marker>
     );
   });
 
