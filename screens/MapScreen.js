@@ -375,53 +375,53 @@ export default function MapScreen() {
                 style={{ width: "100%", maxHeight: 300 }}
                 contentContainerStyle={{ alignItems: "center" }}
               >
-                {/* 🔴 DANGER ÉLEVÉ */}
+                {/* 🔴 SIGNALLEMENT ÉLEVÉ */}
                 <Text
                   style={{
-                    color: "red",
+                    color: "#E57373",
                     fontWeight: "bold",
                     marginVertical: 5,
                     alignSelf: "flex-start",
                   }}
                 >
-                  Danger élevé
+                  Signalement élevé
                 </Text>
                 <View
                   style={{
                     height: 2,
-                    backgroundColor: "red",
+                    backgroundColor: "#E57373",
                     width: "100%",
                     marginBottom: 10,
                   }}
                 />
 
-                {["Agression", "Vol", "Harcelement", "Incendie"].map(
+                {["Agression", "Vol", "Harcèlement", "Incendie"].map(
                   (risk, index) => (
                     <TouchableOpacity
                       key={`high-${index}`}
-                      style={styles.modalButton}
+                      style={styles.dangerHighButton}
                       onPress={() => handleSelectRisk(risk)}
                     >
-                      <Text style={styles.modalButtonText}>{risk}</Text>
+                      <Text style={styles.dangerHighText}>{risk}</Text>
                     </TouchableOpacity>
                   )
                 )}
 
-                {/* 🟧 DANGER MOYEN */}
+                {/* 🟧 SIGNALLEMENT MOYEN */}
                 <Text
                   style={{
-                    color: "orange",
+                    color: "#FFB74D",
                     fontWeight: "bold",
                     marginVertical: 5,
                     alignSelf: "flex-start",
                   }}
                 >
-                  Danger moyen
+                  Signalement moyen
                 </Text>
                 <View
                   style={{
                     height: 2,
-                    backgroundColor: "orange",
+                    backgroundColor: "#FFB74D",
                     width: "100%",
                     marginBottom: 10,
                   }}
@@ -435,17 +435,17 @@ export default function MapScreen() {
                 ].map((risk, index) => (
                   <TouchableOpacity
                     key={`medium-${index}`}
-                    style={styles.modalButton}
+                    style={styles.dangerMediumButton}
                     onPress={() => handleSelectRisk(risk)}
                   >
-                    <Text style={styles.modalButtonText}>{risk}</Text>
+                    <Text style={styles.dangerMediumText}>{risk}</Text>
                   </TouchableOpacity>
                 ))}
 
-                {/* 🟦 DANGER FAIBLE */}
+                {/* 🟨 SIGNALLEMENT FAIBLE */}
                 <Text
                   style={{
-                    color: "blue",
+                    color: "#FFE082",
                     fontWeight: "bold",
                     marginVertical: 5,
                     alignSelf: "flex-start",
@@ -456,23 +456,23 @@ export default function MapScreen() {
                 <View
                   style={{
                     height: 2,
-                    backgroundColor: "blue",
+                    backgroundColor: "#FFE082",
                     width: "100%",
                     marginBottom: 10,
                   }}
                 />
 
                 {[
-                  "Animal dangereux",
+                  "Animal sauvage",
                   "Zone mal éclairée",
                   "Route endommagée",
                 ].map((risk, index) => (
                   <TouchableOpacity
                     key={index}
-                    style={styles.menuButton}
+                    style={styles.dangerLowButton}
                     onPress={() => handleSelectRisk(risk)}
                   >
-                    <Text style={styles.menuButtonText}>{risk}</Text>
+                    <Text style={styles.dangerLowText}>{risk}</Text>
                   </TouchableOpacity>
                 ))}
               </ScrollView>
@@ -739,60 +739,6 @@ export default function MapScreen() {
           </View>
         </Modal>
 
-        {/* --- Modale pour 'Autre signalement' --- */}   
-<Modal
-  transparent={true}
-  animationType="fade"
-  visible={isCustomRiskModal}
-  onRequestClose={() => setIsCustomRiskModal(false)}
->
-  <View style={styles.modalContainer}>
-    <View style={styles.modalContent}>
-      <Text style={styles.modalTitle}>Autre signalement</Text>
-
-      <TextInput
-        style={{
-          width: "100%",
-          height: 120,
-          backgroundColor: "#FFF",
-          borderRadius: 12,
-          padding: 12,
-          borderWidth: 1,
-          borderColor: "#E28AAE",
-          textAlignVertical: "top",
-          fontSize: 15,
-          color: "#2E2633",
-        }}
-        placeholder="Décrivez le signalement... (150 caractères)"
-        placeholderTextColor="#999"
-        maxLength={150}
-        multiline={true}
-        value={customRiskText}
-        onChangeText={(value) => setCustomRiskText(value)}
-      />
-
-      <TouchableOpacity
-        style={[styles.modalButton, { marginTop: 20 }]}
-        onPress={() => {
-          if (customRiskText.trim().length === 0) return alert("Votre message est vide.");
-          setSelectedRisk(customRiskText);
-          setIsCustomRiskModal(false);
-          setIsLevelModalVisible(true);
-          setCustomRiskText("");
-        }}
-      >
-        <Text style={[styles.modalButtonText, { color: "#fff" }]}>Valider</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={[styles.modalButton, { backgroundColor: "#ccc", marginTop: 10 }]}
-        onPress={() => setIsCustomRiskModal(false)}
-      >
-        <Text style={{ color: "#000" }}>Annuler</Text>
-      </TouchableOpacity>
-    </View>
-  </View>
-</Modal>
 
         {/* --- Bouton "+" Menu Principal --- */}
         <TouchableOpacity
@@ -999,5 +945,51 @@ const styles = StyleSheet.create({
     height: 50,
     borderRadius: 25,
     marginHorizontal: 10,
+  },
+  // --- Styles pour les 3 catégories de dangers ---
+  dangerHighButton: {
+    backgroundColor: "#f9f9f9",
+    padding: 10, 
+    borderRadius: 8, 
+    marginVertical: 4, 
+    width: "100%",
+    borderWidth: 1, 
+    borderColor: "#E57373", 
+  },
+  dangerHighText: {
+    color: "#333",
+    fontSize: 15, 
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  dangerMediumButton: {
+    backgroundColor: "#f9f9f9", 
+    padding: 10, 
+    borderRadius: 8,
+    marginVertical: 4, 
+    width: "100%",
+    borderWidth: 1,
+    borderColor: "#FFB74D", 
+  },
+  dangerMediumText: {
+    color: "#333",
+    fontSize: 15, 
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  dangerLowButton: {
+    backgroundColor: "#f9f9f9", 
+    padding: 10, 
+    borderRadius: 8, 
+    marginVertical: 4, 
+    width: "100%",
+    borderWidth: 1, 
+    borderColor: "#FFE082", 
+  },
+  dangerLowText: {
+    color: "#333",
+    fontSize: 15, 
+    fontWeight: "600",
+    textAlign: "center",
   },
 });
