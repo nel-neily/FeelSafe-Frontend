@@ -257,11 +257,29 @@ export default function MapScreen() {
     setSelectedRiskLevel(level);
     setIsLevelModalVisible(false);
 
-    if (!marker || !user.id) return;
+    // Code de Nel qui utilise directement marker.latitude et marker.longitude
+    // if (!marker || !user.id) return;
+    // const newMarker = {
+    //   latitude: marker.latitude,
+    //   longitude: marker.longitude,
+    //   riskType: selectedRisk,
+    //   color: level === 1 ? "yellow" : level === 2 ? "orange" : "red",
+    //   userId: user.id,
+    // };
+
+    // Code modifié pour afficher les marqueurs de signalement en passant par le menu '+'
+
+    if (!user.id) return;
+
+    // Si pas de marker (menu '+'), utiliser la position actuelle
+    const markerCoords = marker || {
+      latitude: position.latitude,
+      longitude: position.longitude,
+    };
 
     const newMarker = {
-      latitude: marker.latitude,
-      longitude: marker.longitude,
+      latitude: markerCoords.latitude,
+      longitude: markerCoords.longitude,
       riskType: selectedRisk,
       color: level === 1 ? "yellow" : level === 2 ? "orange" : "red",
       userId: user.id,
