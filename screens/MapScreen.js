@@ -25,6 +25,9 @@ export default function MapScreen() {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedRisk, setSelectedRisk] = useState(null);
 
+  // --- État pour la modale Menu du bouton '+' ---
+  const [isBtnMenuModal, setIsBtnMenuModal] = useState(false);
+
   // --- États pour les destinations ---
   const [isDestinationModal, setIsDestinationModal] = useState(false);
   const [destinationInput, setDestinationInput] = useState("");
@@ -429,6 +432,14 @@ export default function MapScreen() {
                 style={{ width: "100%", maxHeight: 300 }} // limite la hauteur
                 contentContainerStyle={{ alignItems: "center" }}
               >
+                {/* PROPOSITION DE STYLE (à valider avec Nel) :
+                    - Remplacer styles.modalButton par styles.menuButton pour avoir :
+                      * Fond gris clair (#f9f9f9)
+                      * Bordure douce (#ddd)
+                      * padding: 15 au lieu de 12
+                    - Remplacer styles.modalButtonText par styles.menuButtonText pour :
+                      * Texte gris foncé (#333) au lieu de noir
+                */}
                 {[
                   "Agression",
                   "Vol",
@@ -444,19 +455,68 @@ export default function MapScreen() {
                 ].map((risk, index) => (
                   <TouchableOpacity
                     key={index}
-                    style={styles.modalButton}
+                    style={styles.menuButton}
+                    // PROPOSITION : style={styles.menuButton}
                     onPress={() => handleSelectRisk(risk)}
                   >
-                    <Text style={styles.modalButtonText}>{risk}</Text>
+                    <Text style={styles.menuButtonText}>{risk}</Text>
+                    {/* PROPOSITION : <Text style={styles.menuButtonText}>{risk}</Text> */}
                   </TouchableOpacity>
                 ))}
               </ScrollView>
 
               <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: "#fff" }]}
+                style={[styles.modalButton, { backgroundColor: "#6C5364" }]}
+                // PROPOSITION : style={[styles.modalButton, { backgroundColor: "#6C5364" }]}
                 onPress={() => setIsModalVisible(false)} //  fermer la modal
               >
-                <Text style={styles.modalButtonText}>Annuler</Text>
+                <Text style={[styles.modalButtonText, { color: "#fff" }]}>Annuler</Text>
+                {/* PROPOSITION : <Text style={[styles.modalButtonText, { color: "#fff" }]}>Annuler</Text> */}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
+        {/* --- Modale Menu du bouton '+' --- */}
+        <Modal
+          transparent={true}
+          animationType="fade"
+          visible={isBtnMenuModal}
+          onRequestClose={() => setIsBtnMenuModal(false)}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+
+              {/* Bouton Signaler un danger */}
+              <TouchableOpacity
+                style={[styles.menuButton, { marginVertical: 10 }]}
+                onPress={() => {
+                  setIsBtnMenuModal(false);
+                  setIsModalVisible(true);
+                }}
+              >
+                <FontAwesome name="exclamation-triangle" size={20} color="#ec6e5b" style={{ marginRight: 10 }} />
+                <Text style={styles.menuButtonText}>Signaler un danger</Text>
+              </TouchableOpacity>
+
+              {/* Bouton Ajouter une destination */}
+              <TouchableOpacity
+                style={[styles.menuButton, { marginVertical: 10 }]}
+                onPress={() => {
+                  setIsBtnMenuModal(false);
+                  setIsDestinationModal(true);
+                }}
+              >
+                <FontAwesome name="map-marker" size={20} color="#ec6e5b" style={{ marginRight: 10 }} />
+                <Text style={styles.menuButtonText}>Ajouter une destination</Text>
+              </TouchableOpacity>
+
+              {/* Bouton Annuler */}
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: "#6C5364", marginTop: 10 }]}
+                onPress={() => setIsBtnMenuModal(false)}
+              >
+                <Text style={[styles.modalButtonText, { color: "#fff" }]}>Annuler</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -575,10 +635,10 @@ export default function MapScreen() {
           </View>
         </Modal>
 
-        {/* --- Bouton Destination "+" --- */}
+        {/* --- Bouton "+" Menu Principal --- */}
         <TouchableOpacity
           style={styles.floatingButton}
-          onPress={() => setIsDestinationModal(true)}
+          onPress={() => setIsBtnMenuModal(true)}
         >
           <FontAwesome name="plus" size={30} color="#fff" />
         </TouchableOpacity>
@@ -619,9 +679,29 @@ const styles = StyleSheet.create({
     marginVertical: 5,
     width: "100%",
     alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "center",
   },
   modalButtonText: {
     color: "#000000",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  // --- Styles pour les boutons de la modale menu ---
+  menuButton: {
+    backgroundColor: "#f9f9f9",
+    padding: 15,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    marginVertical: 5,
+    width: "100%",
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "center",
+  },
+  menuButtonText: {
+    color: "#333",
     fontSize: 16,
     fontWeight: "600",
   },
