@@ -15,6 +15,9 @@ import { useEffect, useState, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { updateUser, logoutUser } from "../reducers/user";
 import { Alert } from "react-native";
+
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 export default function ProfileScreen({ navigation }) {
   // GLOBALS VARIABLES
 
@@ -52,7 +55,7 @@ export default function ProfileScreen({ navigation }) {
   const [streetPropositions, setStreetPropositions] = useState([]);
   const adresses = user.addresses;
 
-  const addAddress = async (newAddress) => {
+  const addAddress = async (newAddress, coords) => {
     const response = await fetch(
       `${BACKEND_URL}/users/update?addresses=${newAddress}`,
       {
@@ -60,7 +63,10 @@ export default function ProfileScreen({ navigation }) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email: user.email }),
+        body: JSON.stringify({
+          email: user.email,
+          coords: coords.coordinates,
+        }),
       }
     );
     const data = await response.json();
@@ -98,13 +104,13 @@ export default function ProfileScreen({ navigation }) {
             },
           ]}
         >
-          {adresse}
+          {adresse.address}
         </Text>
         <FontAwesome
           name="trash"
           color={"#fff"}
           size={20}
-          onPress={() => removeAdress(adresse)}
+          onPress={() => removeAdress(adresse.address)}
         />
       </View>
     );
@@ -116,6 +122,7 @@ export default function ProfileScreen({ navigation }) {
     } - ${adresse.city} - ${adresse.postcode}`;
     const formattedAdress =
       combinedAdress.length > 45 ? combinedAdress.slice(0, 45) : combinedAdress;
+
     return (
       <TouchableOpacity
         key={i}
@@ -125,8 +132,11 @@ export default function ProfileScreen({ navigation }) {
           paddingLeft: 10,
           borderWidth: 0.5,
           borderColor: "gray",
+          formattedAdress,
         }}
-        onPress={() => addAddress(formattedAdress)}
+        onPress={() =>
+          addAddress(combinedAdress, { coordinates: adresse.coordinates })
+        }
       >
         <Text>{formattedAdress}</Text>
       </TouchableOpacity>
@@ -149,19 +159,21 @@ export default function ProfileScreen({ navigation }) {
       const allFeatures = data.features;
       const streetsNames = allFeatures.map((feature) => {
         const { housenumber, street, city, postcode } = feature.properties;
+        const { coordinates } = feature.geometry;
         return {
           housenumber,
           street,
           city,
           postcode,
+          coordinates,
         };
       });
+
       setStreetPropositions(streetsNames);
     } catch (error) {
       console.error("Erreur lors de la récupération des adresses:", error);
     }
   };
-
   //   La fonction debounce permettra de ne pas actualiser la recherche à chaque frappe mais après une seconde d'arrêt de frappe
 
   const debounceTimer = useRef(null);
@@ -192,10 +204,17 @@ export default function ProfileScreen({ navigation }) {
   }, [newAdress]);
 
   //   GESTION DE LA DECONNECTION
-
-  const logout = () => {
+  const removeValue = async () => {
+    try {
+      await AsyncStorage.removeItem("token");
+    } catch (e) {
+      console.error(e);
+      // remove error
+    }
+  };
+  const logout = async () => {
     dispatch(logoutUser());
-    navigation.navigate("Login");
+    await removeValue().then(() => navigation.navigate("Login"));
   };
 
   //   GESTION DE LA SUPPRESSION DE COMPTE
