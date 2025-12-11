@@ -279,9 +279,11 @@ export default function MapScreen() {
   }
 
   const getRiskColor = (risk) => {
-    if (["Agression", "Vol", "Harcelement", "Incendie"].includes(risk)) {
-      return "red"; // Danger élevé
+    // Danger élevé
+    if (["Agression", "Vol", "Harcèlement", "Incendie"].includes(risk)) {
+      return "#E57373";
     }
+    // Danger moyen
     if (
       [
         "Comportement suspect",
@@ -290,9 +292,20 @@ export default function MapScreen() {
         "Accident",
       ].includes(risk)
     ) {
-      return "orange"; // Danger moyen
+      return "#FFB74D";
     }
-    return "blue"; // Danger faible
+    // Danger faible
+    if (
+      [
+        "Animal sauvage",
+        "Zone mal éclairée",
+        "Route endommagée",
+      ].includes(risk)
+    ) {
+      return "#FFEB3B";
+    }
+    // Autre signalement
+    return "#9E9E9E";
   };
 
   return (
@@ -380,20 +393,13 @@ export default function MapScreen() {
                   style={{
                     color: "#E57373",
                     fontWeight: "bold",
-                    marginVertical: 5,
+                    marginTop: 5,
+                    marginBottom: 8,
                     alignSelf: "flex-start",
                   }}
                 >
                   Signalement élevé
                 </Text>
-                <View
-                  style={{
-                    height: 2,
-                    backgroundColor: "#E57373",
-                    width: "100%",
-                    marginBottom: 10,
-                  }}
-                />
 
                 {["Agression", "Vol", "Harcèlement", "Incendie"].map(
                   (risk, index) => (
@@ -407,25 +413,29 @@ export default function MapScreen() {
                   )
                 )}
 
+                {/* Ligne pointillée de séparation */}
+                <View
+                  style={{
+                    width: "100%",
+                    height: 1,
+                    borderStyle: "dotted",
+                    borderWidth: 1,
+                    borderColor: "#ccc",
+                    marginVertical: 12,
+                  }}
+                />
+
                 {/* 🟧 SIGNALLEMENT MOYEN */}
                 <Text
                   style={{
                     color: "#FFB74D",
                     fontWeight: "bold",
-                    marginVertical: 5,
+                    marginBottom: 8,
                     alignSelf: "flex-start",
                   }}
                 >
                   Signalement moyen
                 </Text>
-                <View
-                  style={{
-                    height: 2,
-                    backgroundColor: "#FFB74D",
-                    width: "100%",
-                    marginBottom: 10,
-                  }}
-                />
 
                 {[
                   "Comportement suspect",
@@ -442,25 +452,29 @@ export default function MapScreen() {
                   </TouchableOpacity>
                 ))}
 
+                {/* Ligne pointillée de séparation */}
+                <View
+                  style={{
+                    width: "100%",
+                    height: 1,
+                    borderStyle: "dotted",
+                    borderWidth: 1,
+                    borderColor: "#ccc",
+                    marginVertical: 12,
+                  }}
+                />
+
                 {/* 🟨 SIGNALLEMENT FAIBLE */}
                 <Text
                   style={{
-                    color: "#FFE082",
+                    color: "#FFCC80",
                     fontWeight: "bold",
-                    marginVertical: 5,
+                    marginBottom: 8,
                     alignSelf: "flex-start",
                   }}
                 >
-                  Danger faible
+                  Signalement faible
                 </Text>
-                <View
-                  style={{
-                    height: 2,
-                    backgroundColor: "#FFE082",
-                    width: "100%",
-                    marginBottom: 10,
-                  }}
-                />
 
                 {[
                   "Animal sauvage",
@@ -679,7 +693,7 @@ export default function MapScreen() {
                   fontSize: 15,
                   color: "#2E2633",
                 }}
-                placeholder="Décrivez le signalement... (150 caractères)"
+                placeholder="Décrivez le signalement... (150 caractères max)"
                 placeholderTextColor="#999"
                 maxLength={150}
                 multiline={true}
@@ -700,7 +714,7 @@ export default function MapScreen() {
                     latitude: marker.latitude,
                     longitude: marker.longitude,
                     riskType: customRiskText,
-                    color: "#A66CFF", //  couleur Autre signalement
+                    color: "#9E9E9E", // Autre signalement
                     userId: user.id,
                   };
 
@@ -949,46 +963,46 @@ const styles = StyleSheet.create({
   // --- Styles pour les 3 catégories de dangers ---
   dangerHighButton: {
     backgroundColor: "#f9f9f9",
-    padding: 10, 
+    padding: 8, 
     borderRadius: 8, 
-    marginVertical: 4, 
+    marginVertical: 3, 
     width: "100%",
-    borderWidth: 1, 
+    borderWidth: 0.5, 
     borderColor: "#E57373", 
   },
   dangerHighText: {
     color: "#333",
-    fontSize: 15, 
+    fontSize: 14, 
     fontWeight: "600",
     textAlign: "center",
   },
   dangerMediumButton: {
     backgroundColor: "#f9f9f9", 
-    padding: 10, 
+    padding: 8, 
     borderRadius: 8,
-    marginVertical: 4, 
+    marginVertical: 3, 
     width: "100%",
-    borderWidth: 1,
+    borderWidth: 0.5, 
     borderColor: "#FFB74D", 
   },
   dangerMediumText: {
     color: "#333",
-    fontSize: 15, 
+    fontSize: 14, 
     fontWeight: "600",
     textAlign: "center",
   },
   dangerLowButton: {
     backgroundColor: "#f9f9f9", 
-    padding: 10, 
+    padding: 8, 
     borderRadius: 8, 
-    marginVertical: 4, 
+    marginVertical: 3, 
     width: "100%",
-    borderWidth: 1, 
-    borderColor: "#FFE082", 
+    borderWidth: 0.5, 
+    borderColor: "#FFCC80", 
   },
   dangerLowText: {
     color: "#333",
-    fontSize: 15, 
+    fontSize: 14, 
     fontWeight: "600",
     textAlign: "center",
   },
