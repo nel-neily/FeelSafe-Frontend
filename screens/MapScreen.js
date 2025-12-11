@@ -15,44 +15,42 @@ import MapView, { Marker } from "react-native-maps";
 import * as Location from "expo-location";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { importMarkers } from "../reducers/markers";
+import FontAwesome from "react-native-vector-icons/FontAwesome";
 
 export default function MapScreen() {
+  const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
+
   const [position, setPosition] = useState(null);
   const [marker, setMarker] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedRisk, setSelectedRisk] = useState(null);
-  
+
   // --- États pour les destinations ---
   const [isDestinationModal, setIsDestinationModal] = useState(false);
   const [destinationInput, setDestinationInput] = useState("");
   const [addressPropositions, setAddressPropositions] = useState([]);
   const [destinationMarker, setDestinationMarker] = useState(null); // Coordonnées de la destination
-  
+
   const mapRef = useRef(null);
 
- 
   // const [markersFromDB, setMarkersFromDB] = useState([]);
 
   const markersInStore = useSelector((state) => state.marker.markers);
   const user = useSelector((state) => state.user.value);
 
-   // --- Pour le debounce de Destination ---
+  // --- Pour le debounce de Destination ---
   const debounceTimer = useRef(null);
   const dispatch = useDispatch();
-  
+
   // --- Récupération des adresses favorites (vide si pas de compte) ---
   const favoriteAddresses = user.addresses || [];
 
   const [selectedMarker, setSelectedMarker] = useState(null);
-  const mapRef = useRef(null);
-  const dispatch = useDispatch();
-  const markersInStore = useSelector((state) => state.marker.markers);
-  const user = useSelector((state) => state.user.value);
   const [isLevelModalVisible, setIsLevelModalVisible] = useState(false);
   const [selectedRiskLevel, setSelectedRiskLevel] = useState(null);
 
   const fetchMarkers = async () => {
-    fetch("http://192.168.100.192:3000/markers")
+    fetch(`${BACKEND_URL}/markers`)
       .then((res) => res.json())
       .then((data) => {
         if (data.result) {
@@ -111,7 +109,6 @@ export default function MapScreen() {
       }
     })();
   }, []);
-
 
   // --- Fonction pour récupérer les adresses depuis l'API - Reprise de ProfileScreen.js ---
   const fetchAddresses = async (address) => {
@@ -175,44 +172,29 @@ export default function MapScreen() {
   // --- Fonction pour centrer la carte sur une destination ---
   const goToDestination = (latitude, longitude) => {
     if (!latitude || !longitude) {
-      Alert.alert("Erreur", "Coordonnées de la destination introuvables", [{ text: "OK" }]);
+      Alert.alert("Erreur", "Coordonnées de la destination introuvables", [
+        { text: "OK" },
+      ]);
       return;
     }
-    
+
     // Enregistrer le marqueur de destination
     setDestinationMarker({ latitude, longitude });
-    
+
     // Centrer la carte sur la destination
-    mapRef.current?.animateToRegion({
-      latitude,
-      longitude,
-      latitudeDelta: 0.01,
-      longitudeDelta: 0.01,
-    }, 1000); // Animation de 1 seconde
-    
+    mapRef.current?.animateToRegion(
+      {
+        latitude,
+        longitude,
+        latitudeDelta: 0.01,
+        longitudeDelta: 0.01,
+      },
+      1000
+    ); // Animation de 1 seconde
+
     // Fermer la modale
     setDestinationInput("");
-    setAddressPropositions([]);
     setIsDestinationModal(false);
-  };
-
-  // --- Fonction pour géolocaliser une adresse favorite de destination et se positionner directement dessus ---
-  const goToFavoriteAddress = async (address) => {
-    try {
-      const response = await fetch(
-        `https://data.geopf.fr/geocodage/search?q=${encodeURIComponent(address)}&limit=1`
-      );
-      const data = await response.json();
-      if (data.features && data.features.length > 0) {
-        const [longitude, latitude] = data.features[0].geometry.coordinates;
-        goToDestination(latitude, longitude, address);
-      } else {
-        Alert.alert("Erreur", "Impossible de localiser cette adresse", [{ text: "OK" }]);
-      }
-    } catch (error) {
-      console.error("Erreur géolocalisation adresse favorite:", error);
-      Alert.alert("Erreur", "Une erreur est survenue", [{ text: "OK" }]);
-    }
   };
 
   // Fonction marker long press
@@ -237,7 +219,7 @@ export default function MapScreen() {
       color: "orange", //  temporaire
       userId: user.id,
     };
-    fetch("http://192.168.100.192:3000/markers/addmarkers", {
+    fetch(`${BACKEND_URL}/markers/addmarkers`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(newMarker),
@@ -261,7 +243,7 @@ export default function MapScreen() {
       return alert("Vous ne pouvez pas supprimer ce signalement");
     }
 
-    fetch(`http://192.168.100.192:3000/markers/${marker._id}`, {
+    fetch(`${BACKEND_URL}/markers/${marker._id}`, {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId: user.id }),
@@ -290,34 +272,33 @@ export default function MapScreen() {
     );
   }
 
-const handleSelectLevel = (level) => {
-  setSelectedRiskLevel(level);
-  setIsLevelModalVisible(false);
+  const handleSelectLevel = (level) => {
+    setSelectedRiskLevel(level);
+    setIsLevelModalVisible(false);
 
-  if (!marker || !user.id) return;
+    if (!marker || !user.id) return;
 
-  const newMarker = {
-    latitude: marker.latitude,
-    longitude: marker.longitude,
-    riskType: selectedRisk,
-    color: level === 1 ? "green" : level === 2 ? "orange" : "red",
-    userId: user.id,
-  };
+    const newMarker = {
+      latitude: marker.latitude,
+      longitude: marker.longitude,
+      riskType: selectedRisk,
+      color: level === 1 ? "green" : level === 2 ? "orange" : "red",
+      userId: user.id,
+    };
 
-  fetch("http://192.168.100.192:3000/markers/addmarkers", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(newMarker),
-  })
-    .then((res) => res.json())
-    .then((data) => {
-      if (data.result) {
-        fetchMarkers();
-      }
+    fetch(`${BACKEND_URL}/markers/addmarkers`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newMarker),
     })
-    .catch((err) => console.log("Erreur ajout marker", err));
-};
-
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.result) {
+          fetchMarkers();
+        }
+      })
+      .catch((err) => console.log("Erreur ajout marker", err));
+  };
 
   return (
     <SafeAreaProvider>
@@ -337,7 +318,7 @@ const handleSelectLevel = (level) => {
           onLongPress={handleLongPress}
         >
           {displayMarkersFromDB}
-          
+
           {/* --- Marqueur de destination --- */}
           {destinationMarker && (
             <Marker
@@ -383,43 +364,55 @@ const handleSelectLevel = (level) => {
               </View>
             </View>
           </Modal>
-
         )}
 
-<Modal
-  transparent={true}
-  animationType="fade"
-  visible={isLevelModalVisible}
-  onRequestClose={() => setIsLevelModalVisible(false)}
->
-  <View style={styles.levelModalContainer}>
-    <View style={styles.levelModal}>
-      <Text style={styles.modalTitle}>Niveau de danger</Text>
-      <View style={{ flexDirection: "row", justifyContent: "space-around", width: "100%" }}>
-        
-        <TouchableOpacity onPress={() => handleSelectLevel(1)}>
-          <View style={[styles.levelCircle, { backgroundColor: "green" }]} />
-        </TouchableOpacity>
+        <Modal
+          transparent={true}
+          animationType="fade"
+          visible={isLevelModalVisible}
+          onRequestClose={() => setIsLevelModalVisible(false)}
+        >
+          <View style={styles.levelModalContainer}>
+            <View style={styles.levelModal}>
+              <Text style={styles.modalTitle}>Niveau de danger</Text>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-around",
+                  width: "100%",
+                }}
+              >
+                <TouchableOpacity onPress={() => handleSelectLevel(1)}>
+                  <View
+                    style={[styles.levelCircle, { backgroundColor: "green" }]}
+                  />
+                </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => handleSelectLevel(2)}>
-          <View style={[styles.levelCircle, { backgroundColor: "orange" }]} />
-        </TouchableOpacity>
+                <TouchableOpacity onPress={() => handleSelectLevel(2)}>
+                  <View
+                    style={[styles.levelCircle, { backgroundColor: "orange" }]}
+                  />
+                </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => handleSelectLevel(3)}>
-          <View style={[styles.levelCircle, { backgroundColor: "red" }]} />
-        </TouchableOpacity>
+                <TouchableOpacity onPress={() => handleSelectLevel(3)}>
+                  <View
+                    style={[styles.levelCircle, { backgroundColor: "red" }]}
+                  />
+                </TouchableOpacity>
+              </View>
 
-      </View>
-
-      <TouchableOpacity
-        style={[styles.modalButton, { backgroundColor: "#ccc", marginTop: 20 }]}
-        onPress={() => setIsLevelModalVisible(false)}
-      >
-        <Text style={{ color: "black" }}>Annuler</Text>
-      </TouchableOpacity>
-    </View>
-  </View>
-</Modal>
+              <TouchableOpacity
+                style={[
+                  styles.modalButton,
+                  { backgroundColor: "#ccc", marginTop: 20 },
+                ]}
+                onPress={() => setIsLevelModalVisible(false)}
+              >
+                <Text style={{ color: "black" }}>Annuler</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
 
         {/*  Modal de signalement */}
         <Modal
@@ -469,7 +462,6 @@ const handleSelectLevel = (level) => {
           </View>
         </Modal>
 
-
         {/* --- Modale Destination --- */}
         <Modal
           transparent={true}
@@ -480,7 +472,7 @@ const handleSelectLevel = (level) => {
           <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
               <Text style={styles.modalTitle}>Choisir une destination</Text>
-              
+
               {/* Input de recherche d'adresse */}
               <View style={styles.inputContainer}>
                 <FontAwesome name="search" size={20} color="#666" />
@@ -493,23 +485,39 @@ const handleSelectLevel = (level) => {
                 />
               </View>
 
-              {/* --- Propositions de l'API - Reprise de ProfileScreen.js --- */}
+              {/* --- Propositions du store redux - Reprise de ProfileScreen.js --- */}
               {addressPropositions.length > 0 && (
                 <ScrollView style={styles.propositionsContainer}>
                   {addressPropositions.map((adresse, i) => {
-                    const combinedAdress = `${adresse.housenumber ? adresse.housenumber : ""} ${
-                      adresse.street
-                    } - ${adresse.city} - ${adresse.postcode}`;
+                    const combinedAdress = `${
+                      adresse.housenumber ? adresse.housenumber : ""
+                    } ${adresse.street} - ${adresse.city} - ${
+                      adresse.postcode
+                    }`;
                     const formattedAdress =
-                      combinedAdress.length > 45 ? combinedAdress.slice(0, 45) : combinedAdress;
+                      combinedAdress.length > 45
+                        ? combinedAdress.slice(0, 45)
+                        : combinedAdress;
                     return (
                       <TouchableOpacity
                         key={i}
                         style={styles.propositionItem}
-                        onPress={() => goToDestination(adresse.latitude, adresse.longitude, formattedAdress)}
+                        onPress={() =>
+                          goToDestination(
+                            adresse.latitude,
+                            adresse.longitude,
+                            formattedAdress
+                          )
+                        }
                       >
-                        <FontAwesome name="map-marker" size={16} color="#ec6e5b" />
-                        <Text style={styles.propositionText}>{formattedAdress}</Text>
+                        <FontAwesome
+                          name="map-marker"
+                          size={16}
+                          color="#ec6e5b"
+                        />
+                        <Text style={styles.propositionText}>
+                          {formattedAdress}
+                        </Text>
                       </TouchableOpacity>
                     );
                   })}
@@ -519,25 +527,33 @@ const handleSelectLevel = (level) => {
               {/* --- Section Adresses favorites --- */}
               <View style={{ width: "100%", marginTop: 20 }}>
                 <Text style={styles.sectionTitle}>Vos adresses favorites</Text>
-                
+
                 {favoriteAddresses.length > 0 ? (
                   <ScrollView style={{ maxHeight: 150 }}>
                     {favoriteAddresses.map((address, index) => (
                       <TouchableOpacity
                         key={index}
                         style={styles.favoriteItem}
-                        onPress={() => goToFavoriteAddress(address)}
+                        onPress={() =>
+                          goToDestination(address.coords[1], address.coords[0])
+                        }
                       >
-                        <FontAwesome name="location-arrow" size={18} color="#ec6e5b" />
-                        <Text style={styles.favoriteText}>{address}</Text>
+                        <FontAwesome
+                          name="location-arrow"
+                          size={18}
+                          color="#ec6e5b"
+                        />
+                        <Text style={styles.favoriteText}>
+                          {address.address}
+                        </Text>
                       </TouchableOpacity>
                     ))}
                   </ScrollView>
                 ) : (
                   <View style={styles.favoritesPlaceholder}>
                     <Text style={styles.placeholderText}>
-                      {user.token 
-                        ? "Aucune adresse favorite enregistrée" 
+                      {user.token
+                        ? "Aucune adresse favorite enregistrée"
                         : "Connectez-vous pour accéder à vos adresses favorites"}
                     </Text>
                   </View>
@@ -545,10 +561,15 @@ const handleSelectLevel = (level) => {
               </View>
 
               <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: "#6C5364", marginTop: 20 }]}
+                style={[
+                  styles.modalButton,
+                  { backgroundColor: "#6C5364", marginTop: 20 },
+                ]}
                 onPress={() => setIsDestinationModal(false)}
               >
-                <Text style={[styles.modalButtonText, { color: "#fff" }]}>Fermer</Text>
+                <Text style={[styles.modalButtonText, { color: "#fff" }]}>
+                  Fermer
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -565,10 +586,6 @@ const handleSelectLevel = (level) => {
     </SafeAreaProvider>
   );
 }
-
-
-
-
 
 const styles = StyleSheet.create({
   map: {
@@ -726,22 +743,22 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   levelModalContainer: {
-  flex: 1,
-  justifyContent: "center",
-  alignItems: "center",
-  backgroundColor: "rgba(0,0,0,0.4)",
-},
-levelModal: {
-  width: "70%",
-  backgroundColor: "white",
-  padding: 20,
-  borderRadius: 15,
-  alignItems: "center",
-},
-levelCircle: {
-  width: 50,
-  height: 50,
-  borderRadius: 25,
-  marginHorizontal: 10,
-},
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.4)",
+  },
+  levelModal: {
+    width: "70%",
+    backgroundColor: "white",
+    padding: 20,
+    borderRadius: 15,
+    alignItems: "center",
+  },
+  levelCircle: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginHorizontal: 10,
+  },
 });
