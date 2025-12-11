@@ -7,6 +7,8 @@ import {
   Modal,
   TouchableOpacity,
   ScrollView,
+  Alert,
+  TextInput,
 } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import MapView, { Marker } from "react-native-maps";
@@ -19,6 +21,28 @@ export default function MapScreen() {
   const [marker, setMarker] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedRisk, setSelectedRisk] = useState(null);
+  
+  // --- États pour les destinations ---
+  const [isDestinationModal, setIsDestinationModal] = useState(false);
+  const [destinationInput, setDestinationInput] = useState("");
+  const [addressPropositions, setAddressPropositions] = useState([]);
+  const [destinationMarker, setDestinationMarker] = useState(null); // Coordonnées de la destination
+  
+  const mapRef = useRef(null);
+
+ 
+  // const [markersFromDB, setMarkersFromDB] = useState([]);
+
+  const markersInStore = useSelector((state) => state.marker.markers);
+  const user = useSelector((state) => state.user.value);
+
+   // --- Pour le debounce de Destination ---
+  const debounceTimer = useRef(null);
+  const dispatch = useDispatch();
+  
+  // --- Récupération des adresses favorites (vide si pas de compte) ---
+  const favoriteAddresses = user.addresses || [];
+
   const [selectedMarker, setSelectedMarker] = useState(null);
   const mapRef = useRef(null);
   const dispatch = useDispatch();
@@ -87,6 +111,109 @@ export default function MapScreen() {
       }
     })();
   }, []);
+
+
+  // --- Fonction pour récupérer les adresses depuis l'API - Reprise de ProfileScreen.js ---
+  const fetchAddresses = async (address) => {
+    if (!address || address.trim() === "") {
+      return;
+    }
+    try {
+      const response = await fetch(
+        `https://data.geopf.fr/geocodage/search?q=${encodeURIComponent(
+          address
+        )}`
+      );
+      const data = await response.json();
+      const allFeatures = data.features || [];
+      const streetsNames = allFeatures.map((feature) => {
+        const { housenumber, street, city, postcode } = feature.properties;
+        const [longitude, latitude] = feature.geometry.coordinates; // L'API retourne [longitude, latitude]
+        return {
+          housenumber,
+          street,
+          city,
+          postcode,
+          latitude,
+          longitude,
+        };
+      });
+      setAddressPropositions(streetsNames);
+    } catch (error) {
+      console.error("Erreur lors de la récupération des adresses:", error);
+      setAddressPropositions([]);
+    }
+  };
+
+  // --- useEffect avec debounce pour l'API - Repris de ProfileScreen.js ---
+  useEffect(() => {
+    // Nettoyer le timer précédent s'il existe
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+    }
+
+    // Si l'adresse est vide, réinitialiser les propositions
+    if (!destinationInput || destinationInput.trim() === "") {
+      setAddressPropositions([]);
+      return;
+    }
+
+    // Créer un nouveau timer (réduit à 500ms)
+    debounceTimer.current = setTimeout(() => {
+      fetchAddresses(destinationInput);
+    }, 500);
+
+    // Cleanup: annuler le timer si le composant se démonte ou si destinationInput change
+    return () => {
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+    };
+    // Le useEffect se déclenche à chaque nouvelle frappe du user
+  }, [destinationInput]);
+
+  // --- Fonction pour centrer la carte sur une destination ---
+  const goToDestination = (latitude, longitude) => {
+    if (!latitude || !longitude) {
+      Alert.alert("Erreur", "Coordonnées de la destination introuvables", [{ text: "OK" }]);
+      return;
+    }
+    
+    // Enregistrer le marqueur de destination
+    setDestinationMarker({ latitude, longitude });
+    
+    // Centrer la carte sur la destination
+    mapRef.current?.animateToRegion({
+      latitude,
+      longitude,
+      latitudeDelta: 0.01,
+      longitudeDelta: 0.01,
+    }, 1000); // Animation de 1 seconde
+    
+    // Fermer la modale
+    setDestinationInput("");
+    setAddressPropositions([]);
+    setIsDestinationModal(false);
+  };
+
+  // --- Fonction pour géolocaliser une adresse favorite de destination et se positionner directement dessus ---
+  const goToFavoriteAddress = async (address) => {
+    try {
+      const response = await fetch(
+        `https://data.geopf.fr/geocodage/search?q=${encodeURIComponent(address)}&limit=1`
+      );
+      const data = await response.json();
+      if (data.features && data.features.length > 0) {
+        const [longitude, latitude] = data.features[0].geometry.coordinates;
+        goToDestination(latitude, longitude, address);
+      } else {
+        Alert.alert("Erreur", "Impossible de localiser cette adresse", [{ text: "OK" }]);
+      }
+    } catch (error) {
+      console.error("Erreur géolocalisation adresse favorite:", error);
+      Alert.alert("Erreur", "Une erreur est survenue", [{ text: "OK" }]);
+    }
+  };
 
   // Fonction marker long press
   const handleLongPress = (event) => {
@@ -210,6 +337,18 @@ const handleSelectLevel = (level) => {
           onLongPress={handleLongPress}
         >
           {displayMarkersFromDB}
+          
+          {/* --- Marqueur de destination --- */}
+          {destinationMarker && (
+            <Marker
+              coordinate={{
+                latitude: destinationMarker.latitude,
+                longitude: destinationMarker.longitude,
+              }}
+              pinColor="blue"
+              title="Destination"
+            />
+          )}
         </MapView>
 
         {selectedMarker && (
@@ -329,10 +468,107 @@ const handleSelectLevel = (level) => {
             </View>
           </View>
         </Modal>
+
+
+        {/* --- Modale Destination --- */}
+        <Modal
+          transparent={true}
+          animationType="slide"
+          visible={isDestinationModal}
+          onRequestClose={() => setIsDestinationModal(false)}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Choisir une destination</Text>
+              
+              {/* Input de recherche d'adresse */}
+              <View style={styles.inputContainer}>
+                <FontAwesome name="search" size={20} color="#666" />
+                <TextInput
+                  placeholder="Saisissez une adresse..."
+                  placeholderTextColor="#999"
+                  style={styles.textInput}
+                  value={destinationInput}
+                  onChangeText={(value) => setDestinationInput(value)}
+                />
+              </View>
+
+              {/* --- Propositions de l'API - Reprise de ProfileScreen.js --- */}
+              {addressPropositions.length > 0 && (
+                <ScrollView style={styles.propositionsContainer}>
+                  {addressPropositions.map((adresse, i) => {
+                    const combinedAdress = `${adresse.housenumber ? adresse.housenumber : ""} ${
+                      adresse.street
+                    } - ${adresse.city} - ${adresse.postcode}`;
+                    const formattedAdress =
+                      combinedAdress.length > 45 ? combinedAdress.slice(0, 45) : combinedAdress;
+                    return (
+                      <TouchableOpacity
+                        key={i}
+                        style={styles.propositionItem}
+                        onPress={() => goToDestination(adresse.latitude, adresse.longitude, formattedAdress)}
+                      >
+                        <FontAwesome name="map-marker" size={16} color="#ec6e5b" />
+                        <Text style={styles.propositionText}>{formattedAdress}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              )}
+
+              {/* --- Section Adresses favorites --- */}
+              <View style={{ width: "100%", marginTop: 20 }}>
+                <Text style={styles.sectionTitle}>Vos adresses favorites</Text>
+                
+                {favoriteAddresses.length > 0 ? (
+                  <ScrollView style={{ maxHeight: 150 }}>
+                    {favoriteAddresses.map((address, index) => (
+                      <TouchableOpacity
+                        key={index}
+                        style={styles.favoriteItem}
+                        onPress={() => goToFavoriteAddress(address)}
+                      >
+                        <FontAwesome name="location-arrow" size={18} color="#ec6e5b" />
+                        <Text style={styles.favoriteText}>{address}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                ) : (
+                  <View style={styles.favoritesPlaceholder}>
+                    <Text style={styles.placeholderText}>
+                      {user.token 
+                        ? "Aucune adresse favorite enregistrée" 
+                        : "Connectez-vous pour accéder à vos adresses favorites"}
+                    </Text>
+                  </View>
+                )}
+              </View>
+
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: "#6C5364", marginTop: 20 }]}
+                onPress={() => setIsDestinationModal(false)}
+              >
+                <Text style={[styles.modalButtonText, { color: "#fff" }]}>Fermer</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
+        {/* --- Bouton Destination "+" --- */}
+        <TouchableOpacity
+          style={styles.floatingButton}
+          onPress={() => setIsDestinationModal(true)}
+        >
+          <FontAwesome name="plus" size={30} color="#fff" />
+        </TouchableOpacity>
       </SafeAreaView>
     </SafeAreaProvider>
   );
 }
+
+
+
+
 
 const styles = StyleSheet.create({
   map: {
@@ -343,18 +579,21 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   modalContent: {
-    width: "80%",
+    width: "85%",
+    maxHeight: "80%",
     backgroundColor: "white",
-    borderRadius: 10,
+    borderRadius: 15,
     padding: 20,
     alignItems: "center",
   },
   modalTitle: {
-    fontSize: 18,
-    marginBottom: 15,
+    fontSize: 20,
+    marginBottom: 20,
     fontWeight: "bold",
+    color: "#333",
   },
   modalButton: {
     backgroundColor: "#ec6e5b",
@@ -368,6 +607,104 @@ const styles = StyleSheet.create({
     color: "#000000",
     fontSize: 16,
     fontWeight: "600",
+  },
+  // --- Styles pour le bouton Destination "+" ---
+  floatingButton: {
+    position: "absolute",
+    bottom: 30,
+    right: 20,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: "#ec6e5b",
+    justifyContent: "center",
+    alignItems: "center",
+    elevation: 5,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+  // --- Styles pour la modale Destination ---
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+    alignSelf: "flex-start",
+    marginTop: 15,
+    marginBottom: 10,
+  },
+  inputContainer: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 10,
+    padding: 12,
+    backgroundColor: "#f9f9f9",
+  },
+  textInput: {
+    flex: 1,
+    marginLeft: 10,
+    fontSize: 15,
+    color: "#333",
+  },
+  // --- Styles pour les propositions de l'API ---
+  propositionsContainer: {
+    width: "100%",
+    minHeight: 100,
+    maxHeight: 200,
+    marginTop: 10,
+    marginBottom: 10,
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: "#ec6e5b",
+  },
+  propositionItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+    gap: 10,
+  },
+  propositionText: {
+    flex: 1,
+    fontSize: 14,
+    color: "#333",
+  },
+  inputPlaceholder: {
+    marginLeft: 10,
+    color: "#999",
+    fontSize: 15,
+  },
+  favoritesPlaceholder: {
+    width: "100%",
+    padding: 20,
+    backgroundColor: "#f0f0f0",
+    borderRadius: 10,
+    alignItems: "center",
+  },
+  // --- Styles pour les adresses favorites ---
+  favoriteItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+    gap: 10,
+  },
+  favoriteText: {
+    flex: 1,
+    fontSize: 14,
+    color: "#333",
+  },
+  placeholderText: {
+    color: "#666",
+    fontSize: 14,
+    textAlign: "center",
   },
   deleteModalContainer: {
     flex: 1,
