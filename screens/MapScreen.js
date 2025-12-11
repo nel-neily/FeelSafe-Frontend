@@ -49,6 +49,10 @@ export default function MapScreen() {
   const [isLevelModalVisible, setIsLevelModalVisible] = useState(false);
   const [selectedRiskLevel, setSelectedRiskLevel] = useState(null);
 
+  // Modal personnalisé pour le risque 'Autre signalement'
+  const [isCustomRiskModal, setIsCustomRiskModal] = useState(false);
+  const [customRiskText, setCustomRiskText] = useState("");
+
   const fetchMarkers = async () => {
     fetch(`${BACKEND_URL}/markers`)
       .then((res) => res.json())
@@ -209,32 +213,6 @@ export default function MapScreen() {
     setSelectedRisk(risk); // on enregistre le choix
     setIsModalVisible(false); //  on ferme la modal
     setIsLevelModalVisible(true); // on ouvre la modal niveau de risque
-
-    if (!marker) return;
-
-    const newMarker = {
-      latitude: marker.latitude,
-      longitude: marker.longitude,
-      riskType: risk,
-      color: "orange", //  temporaire
-      userId: user.id,
-    };
-    fetch(`${BACKEND_URL}/markers/addmarkers`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newMarker),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.result) {
-          //  rafraîchit la liste des markers dans Redux
-          fetchMarkers();
-        }
-      })
-      .catch((err) => console.log("Erreur ajout marker", err));
-
-    // supprime le marker temporaire
-    // setMarker(null);
   };
 
   const handleMarkerPress = (marker) => {
@@ -282,7 +260,7 @@ export default function MapScreen() {
       latitude: marker.latitude,
       longitude: marker.longitude,
       riskType: selectedRisk,
-      color: level === 1 ? "green" : level === 2 ? "orange" : "red",
+      color: level === 1 ? "blue" : level === 2 ? "orange" : "red",
       userId: user.id,
     };
 
@@ -295,6 +273,7 @@ export default function MapScreen() {
       .then((data) => {
         if (data.result) {
           fetchMarkers();
+          setMarker(null);
         }
       })
       .catch((err) => console.log("Erreur ajout marker", err));
@@ -384,7 +363,7 @@ export default function MapScreen() {
               >
                 <TouchableOpacity onPress={() => handleSelectLevel(1)}>
                   <View
-                    style={[styles.levelCircle, { backgroundColor: "green" }]}
+                    style={[styles.levelCircle, { backgroundColor: "blue" }]}
                   />
                 </TouchableOpacity>
 
@@ -451,7 +430,17 @@ export default function MapScreen() {
                   </TouchableOpacity>
                 ))}
               </ScrollView>
-
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: "#78A9FF" }]}
+                onPress={() => {
+                  setIsModalVisible(false);
+                  setIsCustomRiskModal(true);
+                }}
+              >
+                <Text style={[styles.modalButtonText, { color: "#fff" }]}>
+                  Autre signalement
+                </Text>
+              </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalButton, { backgroundColor: "#fff" }]}
                 onPress={() => setIsModalVisible(false)} //  fermer la modal
@@ -574,6 +563,61 @@ export default function MapScreen() {
             </View>
           </View>
         </Modal>
+
+        {/* --- Modale pour 'Autre signalement' --- */}   
+<Modal
+  transparent={true}
+  animationType="fade"
+  visible={isCustomRiskModal}
+  onRequestClose={() => setIsCustomRiskModal(false)}
+>
+  <View style={styles.modalContainer}>
+    <View style={styles.modalContent}>
+      <Text style={styles.modalTitle}>Autre signalement</Text>
+
+      <TextInput
+        style={{
+          width: "100%",
+          height: 120,
+          backgroundColor: "#FFF",
+          borderRadius: 12,
+          padding: 12,
+          borderWidth: 1,
+          borderColor: "#E28AAE",
+          textAlignVertical: "top",
+          fontSize: 15,
+          color: "#2E2633",
+        }}
+        placeholder="Décrivez le signalement... (150 caractères)"
+        placeholderTextColor="#999"
+        maxLength={150}
+        multiline={true}
+        value={customRiskText}
+        onChangeText={(value) => setCustomRiskText(value)}
+      />
+
+      <TouchableOpacity
+        style={[styles.modalButton, { marginTop: 20 }]}
+        onPress={() => {
+          if (customRiskText.trim().length === 0) return alert("Votre message est vide.");
+          setSelectedRisk(customRiskText);
+          setIsCustomRiskModal(false);
+          setIsLevelModalVisible(true);
+          setCustomRiskText("");
+        }}
+      >
+        <Text style={[styles.modalButtonText, { color: "#fff" }]}>Valider</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.modalButton, { backgroundColor: "#ccc", marginTop: 10 }]}
+        onPress={() => setIsCustomRiskModal(false)}
+      >
+        <Text style={{ color: "#000" }}>Annuler</Text>
+      </TouchableOpacity>
+    </View>
+  </View>
+</Modal>
 
         {/* --- Bouton Destination "+" --- */}
         <TouchableOpacity
