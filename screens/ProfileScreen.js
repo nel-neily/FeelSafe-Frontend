@@ -65,7 +65,7 @@ export default function ProfileScreen({ navigation }) {
         },
         body: JSON.stringify({
           email: user.email,
-          coords: coords.coordinates,
+          coordinates: coords.coordinates,
         }),
       }
     );

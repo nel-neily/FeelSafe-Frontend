@@ -29,5 +29,9 @@
     "react-redux": "^9.2.0",
     "redux-persist": "^6.0.0"
   },
-  "private": true
+  "private": true,
+  "devDependencies": {
+    "jest": "^30.2.0",
+    "supertest": "^7.1.4"
+  }
 }
