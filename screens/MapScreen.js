@@ -285,7 +285,7 @@ export default function MapScreen() {
       latitude: marker.latitude,
       longitude: marker.longitude,
       riskType: selectedRisk,
-      color: level === 1 ? "green" : level === 2 ? "orange" : "red",
+      color: level === 1 ? "yellow" : level === 2 ? "orange" : "red",
       userId: user.id,
     };
 
@@ -387,7 +387,7 @@ export default function MapScreen() {
               >
                 <TouchableOpacity onPress={() => handleSelectLevel(1)}>
                   <View
-                    style={[styles.levelCircle, { backgroundColor: "green" }]}
+                    style={[styles.levelCircle, { backgroundColor: "yellow" }]}
                   />
                 </TouchableOpacity>
 
@@ -411,7 +411,7 @@ export default function MapScreen() {
                 ]}
                 onPress={() => setIsLevelModalVisible(false)}
               >
-                <Text style={{ color: "black" }}>Annuler</Text>
+                <Text style={[styles.modalButtonText, { color: "#fff" }]}>Annuler</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -432,14 +432,7 @@ export default function MapScreen() {
                 style={{ width: "100%", maxHeight: 300 }} // limite la hauteur
                 contentContainerStyle={{ alignItems: "center" }}
               >
-                {/* PROPOSITION DE STYLE (à valider avec Nel) :
-                    - Remplacer styles.modalButton par styles.menuButton pour avoir :
-                      * Fond gris clair (#f9f9f9)
-                      * Bordure douce (#ddd)
-                      * padding: 15 au lieu de 12
-                    - Remplacer styles.modalButtonText par styles.menuButtonText pour :
-                      * Texte gris foncé (#333) au lieu de noir
-                */}
+              
                 {[
                   "Agression",
                   "Vol",
@@ -456,22 +449,18 @@ export default function MapScreen() {
                   <TouchableOpacity
                     key={index}
                     style={styles.menuButton}
-                    // PROPOSITION : style={styles.menuButton}
                     onPress={() => handleSelectRisk(risk)}
                   >
                     <Text style={styles.menuButtonText}>{risk}</Text>
-                    {/* PROPOSITION : <Text style={styles.menuButtonText}>{risk}</Text> */}
                   </TouchableOpacity>
                 ))}
               </ScrollView>
 
               <TouchableOpacity
                 style={[styles.modalButton, { backgroundColor: "#6C5364" }]}
-                // PROPOSITION : style={[styles.modalButton, { backgroundColor: "#6C5364" }]}
                 onPress={() => setIsModalVisible(false)} //  fermer la modal
               >
                 <Text style={[styles.modalButtonText, { color: "#fff" }]}>Annuler</Text>
-                {/* PROPOSITION : <Text style={[styles.modalButtonText, { color: "#fff" }]}>Annuler</Text> */}
               </TouchableOpacity>
             </View>
           </View>
