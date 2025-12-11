@@ -348,21 +348,20 @@ export default function MapScreen() {
 
                 {selectedMarker.users._id === user.id && (
                   <TouchableOpacity
-                    style={styles.deleteButton}
+                    style={styles.modalButton}
                     onPress={() => handleMarkerPress(selectedMarker)}
                   >
-                    <Text style={{ color: "white", fontSize: 18 }}>
-                      {" "}
+                    <Text style={[styles.modalButtonText, { color: "#fff" }]}>
                       Supprimer
                     </Text>
                   </TouchableOpacity>
                 )}
 
                 <TouchableOpacity
-                  style={[styles.modalButton, { backgroundColor: "gray" }]}
+                  style={[styles.menuButton]}
                   onPress={() => setSelectedMarker(null)}
                 >
-                  <Text style={{ color: "white" }}>Fermer</Text>
+                  <Text style={styles.menuButtonText}>Fermer</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -679,9 +678,9 @@ const styles = StyleSheet.create({
   // --- Styles pour les boutons de la modale menu ---
   menuButton: {
     backgroundColor: "#f9f9f9",
-    padding: 15,
+    padding: 12,
     borderRadius: 10,
-    borderWidth: 1,
+    borderWidth: 0.5,
     borderColor: "#ddd",
     marginVertical: 5,
     width: "100%",
