@@ -13,7 +13,6 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import MapView, { Marker } from "react-native-maps";
 import * as Location from "expo-location";
-import { MaterialIcons } from "@expo/vector-icons";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { importMarkers } from "../reducers/markers";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
@@ -31,7 +30,6 @@ export default function MapScreen() {
   // --- États pour les destinations ---
   const [isDestinationModal, setIsDestinationModal] = useState(false);
   const [destinationInput, setDestinationInput] = useState("");
-  const [addressPropositions, setAddressPropositions] = useState([]);
   const [destinationMarker, setDestinationMarker] = useState(null); // Coordonnées de la destination
 
   const mapRef = useRef(null);
@@ -40,7 +38,6 @@ export default function MapScreen() {
   const user = useSelector((state) => state.user.value);
 
   // --- Pour le debounce de Destination ---
-  const debounceTimer = useRef(null);
   const dispatch = useDispatch();
 
   // --- Récupération des adresses favorites (vide si pas de compte) ---
@@ -74,9 +71,7 @@ export default function MapScreen() {
         title={m.riskType}
         onPress={(e) => setSelectedMarker(m)}
         onDeselect={() => setSelectedMarker(null)}
-      >
-        <MaterialIcons name="priority-high" size={50} color={m.color} />
-      </Marker>
+      ></Marker>
     );
   });
 
