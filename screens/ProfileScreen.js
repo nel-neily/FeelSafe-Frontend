@@ -11,13 +11,13 @@ import {
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
-import { useEffect, useState, useRef } from "react";
+import { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { updateUser, logoutUser } from "../reducers/user";
 import { Alert } from "react-native";
 import { utilFetch } from "../utils/function";
-
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import AddressSearch from "../components/AdressSearch";
 
 export default function ProfileScreen({ navigation }) {
   // GLOBALS VARIABLES
@@ -40,24 +40,8 @@ export default function ProfileScreen({ navigation }) {
   //   GESTION DU DARKMODE
   const [darkMode, setDarkMode] = useState(false);
 
-  //   GESTION DES ADRESSES FAVORITES
-  //   un input vient requêté une API Géoloc française toutes les secondes où le user ne tape plus
-  //   une collection de propositions viennent s'afficher et le user n'a qu'à cliquer sur uen adresse pour qu'elle s'enregistre
-  const [newAdress, setNewAdress] = useState("");
-  const [streetPropositions, setStreetPropositions] = useState([]);
   const adresses = user.addresses;
 
-  const addAddress = async (newAddress, coords) => {
-    const url = `/users/update?addresses=${newAddress}`;
-    const data = await utilFetch(url, "POST", {
-      email: user.email,
-      coordinates: coords.coordinates,
-    });
-
-    dispatch(updateUser({ addresses: data.addresses }));
-    setNewAdress("");
-    setStreetPropositions([]);
-  };
   const removeAdress = async (addressToDelete) => {
     const url = `/users/update?addresses=${addressToDelete}`;
     const data = await utilFetch(url, "DELETE", { email: user.email });
@@ -89,93 +73,6 @@ export default function ProfileScreen({ navigation }) {
       </View>
     );
   });
-
-  const displayedStreetPropositions = streetPropositions.map((adresse, i) => {
-    const combinedAdress = `${adresse.housenumber ? adresse.housenumber : ""} ${
-      adresse.street
-    } - ${adresse.city} - ${adresse.postcode}`;
-    const formattedAdress =
-      combinedAdress.length > 45 ? combinedAdress.slice(0, 45) : combinedAdress;
-
-    return (
-      <TouchableOpacity
-        key={i}
-        style={{
-          height: 35,
-          justifyContent: "center",
-          paddingLeft: 10,
-          borderWidth: 0.5,
-          borderColor: "gray",
-          formattedAdress,
-        }}
-        onPress={() =>
-          addAddress(combinedAdress, { coordinates: adresse.coordinates })
-        }
-      >
-        <Text>{formattedAdress}</Text>
-      </TouchableOpacity>
-    );
-  });
-
-  //   Le fetch à l'API se fait dans une requête async appelée par le useEffect plus bas
-
-  const fetchAdresses = async (address) => {
-    if (!address || address.trim() === "") {
-      return;
-    }
-    try {
-      const response = await fetch(
-        `https://data.geopf.fr/geocodage/search?q=${encodeURIComponent(
-          address
-        )}`
-      );
-      const data = await response.json();
-      const allFeatures = data.features;
-      const streetsNames = allFeatures.map((feature) => {
-        const { housenumber, street, city, postcode } = feature.properties;
-        const { coordinates } = feature.geometry;
-        return {
-          housenumber,
-          street,
-          city,
-          postcode,
-          coordinates,
-        };
-      });
-
-      setStreetPropositions(streetsNames);
-    } catch (error) {
-      console.error("Erreur lors de la récupération des adresses:", error);
-    }
-  };
-  //   La fonction debounce permettra de ne pas actualiser la recherche à chaque frappe mais après une seconde d'arrêt de frappe
-
-  const debounceTimer = useRef(null);
-
-  useEffect(() => {
-    // Nettoyer le timer précédent s'il existe
-    if (debounceTimer.current) {
-      clearTimeout(debounceTimer.current);
-    }
-
-    // Si l'adresse est vide, ne rien faire
-    if (!newAdress || newAdress.trim() === "") {
-      return;
-    }
-
-    // Créer un nouveau timer
-    debounceTimer.current = setTimeout(() => {
-      fetchAdresses(newAdress);
-    }, 1000);
-
-    // Cleanup: annuler le timer si le composant se démonte ou si newAdress change
-    return () => {
-      if (debounceTimer.current) {
-        clearTimeout(debounceTimer.current);
-      }
-    };
-    // Le useEffect se déclenche à chaque nouvelle frappe du user
-  }, [newAdress]);
 
   //   GESTION DE LA DECONNECTION
   const removeValue = async () => {
@@ -266,51 +163,8 @@ export default function ProfileScreen({ navigation }) {
                   </>
                 )}
               </View>
-              <View style={{ flexDirection: "column", gap: 20, width: "100%" }}>
-                <Text style={[styles.text_white, { fontSize: 18 }]}>
-                  Adresses enregistrées
-                </Text>
-                <View
-                  style={{
-                    flexDirection: "row",
-                    justifyContent: "flex-start",
-                    width: "100%",
-                    borderWidth: 1,
-                    borderColor: "white",
-                    borderRadius: 10,
-                    paddingLeft: 5,
-                    height: 45,
-                  }}
-                >
-                  <TextInput
-                    placeholder="Nouvelle addresse"
-                    placeholderTextColor="#fff"
-                    style={{
-                      width: "80%",
-                      height: "100%",
-                      color: "#fff",
-                    }}
-                    value={newAdress}
-                    onChangeText={(value) => setNewAdress(value)}
-                  ></TextInput>
-                </View>
 
-                {streetPropositions.length > 0 && (
-                  <ScrollView
-                    style={{
-                      height: 150,
-                      width: "100%",
-                      backgroundColor: "#fff",
-                      position: "absolute",
-                      top: 110,
-                      borderRadius: 10,
-                      zIndex: 10,
-                    }}
-                  >
-                    {displayedStreetPropositions}
-                  </ScrollView>
-                )}
-              </View>
+              <AddressSearch />
               <ScrollView>{displayedAdresses}</ScrollView>
               <TouchableOpacity
                 style={styles.button_main_features}
@@ -318,21 +172,6 @@ export default function ProfileScreen({ navigation }) {
               >
                 <Text style={styles.text_white}>Se déconnecter</Text>
               </TouchableOpacity>
-              {/* <TouchableOpacity
-                style={[
-                  styles.button_main_features,
-                  { flexDirection: "row", justifyContent: "space-around" },
-                ]}
-                onPress={() => setDarkMode(!darkMode)}
-              >
-                <Text style={styles.text_white}>Mode sombre</Text>
-                {darkMode && (
-                  <FontAwesome name="toggle-off" color={"#fff"} size={30} />
-                )}
-                {darkMode || (
-                  <FontAwesome name="toggle-on" color={"#fff"} size={30} />
-                )}
-              </TouchableOpacity> */}
               <TouchableOpacity
                 style={[
                   styles.button_main_features,
