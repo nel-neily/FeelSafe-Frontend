@@ -52,7 +52,11 @@ export default function ProfileScreen({ navigation }) {
       <View style={styles.addressItem} key={i}>
         <Text style={styles.addressText}>{adresse.address}</Text>
         <TouchableOpacity onPress={() => removeAdress(adresse.address)}>
-          <FontAwesome name="trash" color={"rgba(255, 255, 255, 0.7)"} size={18} />
+          <FontAwesome
+            name="trash"
+            color={"rgba(255, 255, 255, 0.7)"}
+            size={18}
+          />
         </TouchableOpacity>
       </View>
     );
@@ -147,14 +151,15 @@ export default function ProfileScreen({ navigation }) {
                   </>
                 )}
               </View>
-                  <AddressSearch/>
-                
-              
+              <AddressSearch page={"Profile"} />
+
               <View style={styles.addressListContainer}>
                 {displayedAdresses.length > 0 ? (
                   displayedAdresses
                 ) : (
-                  <Text style={styles.emptyText}>Aucune adresse enregistrée</Text>
+                  <Text style={styles.emptyText}>
+                    Aucune adresse enregistrée
+                  </Text>
                 )}
               </View>
               <TouchableOpacity
@@ -167,9 +172,7 @@ export default function ProfileScreen({ navigation }) {
                 style={styles.button_delete_account}
                 onPress={() => setEraseAccountModal(!eraseAccountModal)}
               >
-                <Text style={styles.text_delete}>
-                  Supprimer votre compte
-                </Text>
+                <Text style={styles.text_delete}>Supprimer votre compte</Text>
               </TouchableOpacity>
               <Modal
                 animationType="slide"
@@ -259,10 +262,10 @@ const styles = StyleSheet.create({
     flex: 1,
     boxSizing: "border-box",
     flexDirection: "column",
-    justifyContent: "flex-start", 
+    justifyContent: "flex-start",
     alignItems: "center",
-    padding: 15, 
-    gap: 10, 
+    padding: 15,
+    gap: 10,
   },
   background: {
     flex: 1,
@@ -276,10 +279,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     width: "90%",
     minHeight: 50,
-    borderBottomWidth: 0.5, 
-    borderBottomColor: "rgba(255, 255, 255, 0.4)", 
+    borderBottomWidth: 0.5,
+    borderBottomColor: "rgba(255, 255, 255, 0.4)",
     paddingBottom: 10,
-    justifyContent: "center", 
+    justifyContent: "center",
     alignItems: "center",
     gap: 15,
   },
@@ -294,7 +297,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderWidth: 0.5,
     borderColor: "#ddd",
-    backgroundColor: "rgba(255, 255, 255, 0.1)", 
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
   },
   centeredView: {
     flex: 1,
@@ -353,10 +356,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "transparent",
     borderWidth: 0.5,
-    borderColor: "rgba(255, 255, 255, 0.3)", 
+    borderColor: "rgba(255, 255, 255, 0.3)",
   },
   text_delete: {
-    color: "rgba(255, 255, 255, 0.6)", 
+    color: "rgba(255, 255, 255, 0.6)",
     fontSize: 14,
     fontWeight: "400",
   },
@@ -365,7 +368,7 @@ const styles = StyleSheet.create({
     width: "100%",
     padding: 12,
     borderRadius: 8,
-    backgroundColor: "#E57373", 
+    backgroundColor: "#E57373",
     alignItems: "center",
     marginBottom: 10,
   },
@@ -383,11 +386,11 @@ const styles = StyleSheet.create({
     flexDirection: "column",
     gap: 12,
     width: "100%",
-    marginTop: 20, 
+    marginTop: 20,
   },
   sectionTitle: {
     color: "#fff",
-    fontSize: 16, 
+    fontSize: 16,
     fontWeight: "600",
   },
   addressInputContainer: {

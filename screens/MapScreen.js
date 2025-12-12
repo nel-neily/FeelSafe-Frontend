@@ -13,24 +13,23 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import MapView, { Marker } from "react-native-maps";
 import * as Location from "expo-location";
-import { MaterialIcons } from "@expo/vector-icons";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { importMarkers } from "../reducers/markers";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
 import { utilFetch, utilGetFetch } from "../utils/function";
+import AddressSearch from "../components/AdressSearch";
 
 export default function MapScreen() {
   const [position, setPosition] = useState(null);
   const [marker, setMarker] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  
+
   // --- État pour la modale Menu du bouton '+' ---
   const [isBtnMenuModal, setIsBtnMenuModal] = useState(false);
 
   // --- États pour les destinations ---
   const [isDestinationModal, setIsDestinationModal] = useState(false);
   const [destinationInput, setDestinationInput] = useState("");
-  const [addressPropositions, setAddressPropositions] = useState([]);
   const [destinationMarker, setDestinationMarker] = useState(null); // Coordonnées de la destination
 
   const mapRef = useRef(null);
@@ -39,7 +38,6 @@ export default function MapScreen() {
   const user = useSelector((state) => state.user.value);
 
   // --- Pour le debounce de Destination ---
-  const debounceTimer = useRef(null);
   const dispatch = useDispatch();
 
   // --- Récupération des adresses favorites (vide si pas de compte) ---
@@ -65,8 +63,6 @@ export default function MapScreen() {
   };
 
   const handleMarkerPress = (marker) => {
-    
-
     setSelectedMarker(marker);
     setIsMarkerModalVisible(true);
   };
@@ -78,7 +74,7 @@ export default function MapScreen() {
         coordinate={{ latitude: m.latitude, longitude: m.longitude }}
         title={m.riskType}
         onPress={(e) => handleMarkerPress(m)}
-         onDeselect={() => setSelectedMarker(null)}
+        onDeselect={() => setSelectedMarker(null)}
       />
       //   <MaterialIcons name="priority-high" size={50} color={m.color} />
       // </Marker>
@@ -123,69 +119,6 @@ export default function MapScreen() {
     })();
     fetchMarkers(); // récupération au montage
   }, []);
-
-  // --- Fonction pour récupérer les adresses depuis l'API - Reprise de ProfileScreen.js ---
-  // Elle affiche les propositions d'addresses renvoyés par l'API
-  // @params:string
-  const fetchAddresses = async (address) => {
-    if (!address || address.trim() === "") {
-      return;
-    }
-    try {
-      const response = await fetch(
-        `https://data.geopf.fr/geocodage/search?q=${encodeURIComponent(
-          address
-        )}`
-      );
-      const data = await response.json();
-      const allFeatures = data.features || [];
-      const streetsNames = allFeatures.map((feature) => {
-        const { housenumber, street, city, postcode } = feature.properties;
-        const [longitude, latitude] = feature.geometry.coordinates; // L'API retourne [longitude, latitude]
-        return {
-          housenumber,
-          street,
-          city,
-          postcode,
-          latitude,
-          longitude,
-        };
-      });
-      setAddressPropositions(streetsNames);
-    } catch (error) {
-      console.error("Erreur lors de la récupération des adresses:", error);
-      setAddressPropositions([]);
-    }
-  };
-
-  // --- useEffect avec debounce pour l'API - Repris de ProfileScreen.js ---
-  // Ce useEffect se déclenche à chaque input sur le clavier pour trouver une addresse en API
-  // Elle attend 0.5 seconde lorsque l'utilisateur ne tape plus pour afficher des propositions
-  useEffect(() => {
-    // Nettoyer le timer précédent s'il existe
-    if (debounceTimer.current) {
-      clearTimeout(debounceTimer.current);
-    }
-
-    // Si l'adresse est vide, réinitialiser les propositions
-    if (!destinationInput || destinationInput.trim() === "") {
-      setAddressPropositions([]);
-      return;
-    }
-
-    // Créer un nouveau timer (réduit à 500ms)
-    debounceTimer.current = setTimeout(() => {
-      fetchAddresses(destinationInput);
-    }, 500);
-
-    // Cleanup: annuler le timer si le composant se démonte ou si destinationInput change
-    return () => {
-      if (debounceTimer.current) {
-        clearTimeout(debounceTimer.current);
-      }
-    };
-    // Le useEffect se déclenche à chaque nouvelle frappe du user
-  }, [destinationInput]);
 
   // --- Fonction pour centrer la carte sur une destination ---
   const goToDestination = (latitude, longitude) => {
@@ -268,21 +201,15 @@ export default function MapScreen() {
   // Cette fonction supprime un marker et a une vérification => l'id utilisateur est identique à celui ramené par le marker
   // @params: marker(id, color, coordonnées, et la clé étrangère user
   const handleMarkerDelete = async (marker) => {
-    
-
     if (marker.users._id !== user.id) {
       return alert("Vous ne pouvez pas supprimer ce signalement");
     }
-  
 
     try {
       const url = `/markers/${marker._id}`;
       const data = await utilFetch(url, "DELETE", { userId: user.id });
-    
 
       if (data.result) {
-       
-
         fetchMarkers(); // Refresh la map
         setIsMarkerModalVisible(false); // ferme le popup
       }
@@ -625,57 +552,7 @@ export default function MapScreen() {
             <View style={styles.modalContent}>
               <Text style={styles.modalTitle}>Choisir une destination</Text>
 
-              {/* Input de recherche d'adresse */}
-              <View style={styles.inputContainer}>
-                <FontAwesome name="search" size={20} color="#666" />
-                <TextInput
-                  placeholder="Saisissez une adresse..."
-                  placeholderTextColor="#999"
-                  style={styles.textInput}
-                  value={destinationInput}
-                  onChangeText={(value) => setDestinationInput(value)}
-                />
-              </View>
-
-              {/* --- Propositions du store redux - Reprise de ProfileScreen.js --- */}
-              {addressPropositions.length > 0 && (
-                <ScrollView style={styles.propositionsContainer}>
-                  {addressPropositions.map((adresse, i) => {
-                    const combinedAdress = `${
-                      adresse.housenumber ? adresse.housenumber : ""
-                    } ${adresse.street} - ${adresse.city} - ${
-                      adresse.postcode
-                    }`;
-                    const formattedAdress =
-                      combinedAdress.length > 45
-                        ? combinedAdress.slice(0, 45)
-                        : combinedAdress;
-                    return (
-                      <TouchableOpacity
-                        key={i}
-                        style={styles.propositionItem}
-                        onPress={() =>
-                          goToDestination(
-                            adresse.latitude,
-                            adresse.longitude,
-                            formattedAdress
-                          )
-                        }
-                      >
-                        <FontAwesome
-                          name="map-marker"
-                          size={16}
-                          color="#ec6e5b"
-                        />
-                        <Text style={styles.propositionText}>
-                          {formattedAdress}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </ScrollView>
-              )}
-
+              <AddressSearch page={"Map"} goToDestination={goToDestination} />
               {/* --- Section Adresses favorites --- */}
               <View style={{ width: "100%", marginTop: 20 }}>
                 <Text style={styles.sectionTitle}>Vos adresses favorites</Text>
