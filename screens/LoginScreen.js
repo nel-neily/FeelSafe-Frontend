@@ -10,6 +10,7 @@ import {
   View,
   Modal,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { useDispatch } from "react-redux";
 import { addUser } from "../reducers/user";
 import { useNavigation } from "@react-navigation/native";
@@ -186,6 +187,10 @@ export default function LoginScreen() {
       style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
+      <LinearGradient
+        colors={["#26232F", "#282430", "#6C5364"]}
+        style={styles.background}
+      />
       <Image style={styles.image} source={require("../assets/logo-rond.png")} />
 
       {/* ----- BUTTONS ----- */}
@@ -349,9 +354,16 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#4B3A43",
     alignItems: "center",
     justifyContent: "center",
+  },
+  background: {
+    flex: 1,
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   image: {
     width: "100%",
