@@ -12,7 +12,7 @@ import {
 import { utilFetch } from "../utils/function";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
 
-export default function AddressSearch() {
+export default function AddressSearch(props) {
   const user = useSelector((state) => state.user.value);
   const dispatch = useDispatch();
   const [newAdress, setNewAdress] = useState("");
@@ -94,44 +94,84 @@ export default function AddressSearch() {
     const formattedAdress =
       combinedAdress.length > 45 ? combinedAdress.slice(0, 45) : combinedAdress;
 
-    return (
-      <TouchableOpacity
-        key={i}
-        style={styles.propositionItem}
-        onPress={() =>
-          addAddress(combinedAdress, { coordinates: adresse.coordinates })
-        }
-      >
-        <FontAwesome name="map-marker" size={16} color="#ec6e5b" />
-        <Text style={styles.propositionText}>{formattedAdress}</Text>
-      </TouchableOpacity>
-    );
+    if (props.page === "Profile") {
+      return (
+        <TouchableOpacity
+          key={i}
+          style={styles.propositionItem}
+          onPress={() =>
+            addAddress(combinedAdress, { coordinates: adresse.coordinates })
+          }
+        >
+          <FontAwesome name="map-marker" size={16} color="#ec6e5b" />
+          <Text style={styles.propositionText}>{formattedAdress}</Text>
+        </TouchableOpacity>
+      );
+    } else {
+      // Extraire latitude et longitude du tableau coordinates (format GeoJSON: [longitude, latitude])
+      const longitude = adresse.coordinates[0];
+      const latitude = adresse.coordinates[1];
+
+      return (
+        <TouchableOpacity
+          key={i}
+          style={styles.propositionItem}
+          onPress={() => props.goToDestination(latitude, longitude)}
+        >
+          <FontAwesome name="map-marker" size={16} color="#ec6e5b" />
+          <Text style={styles.propositionText}>{formattedAdress}</Text>
+        </TouchableOpacity>
+      );
+    }
   });
 
   return (
     <>
-      <View style={styles.addressSection}>
-        <Text style={styles.sectionTitle}>Adresses enregistrées</Text>
-        <View style={styles.addressInputContainer}>
-          <FontAwesome
-            name="search"
-            size={16}
-            color="rgba(255, 255, 255, 0.7)"
-          />
-          <TextInput
-            placeholder="Nouvelle adresse"
-            placeholderTextColor="rgba(255, 255, 255, 0.5)"
-            style={styles.addressInput}
-            value={newAdress}
-            onChangeText={(value) => setNewAdress(value)}
-          />
+      {props.page === "Profile" && (
+        <View style={[styles.addressSection]}>
+          <Text style={styles.sectionTitle}>Adresses enregistrées</Text>
+          <View style={styles.addressInputContainer}>
+            <FontAwesome
+              name="search"
+              size={16}
+              color="rgba(255, 255, 255, 0.7)"
+            />
+            <TextInput
+              placeholder="Nouvelle adresse"
+              placeholderTextColor="rgba(255, 255, 255, 0.5)"
+              style={styles.addressInput}
+              value={newAdress}
+              onChangeText={(value) => setNewAdress(value)}
+            />
+          </View>
+          {streetPropositions.length > 0 && (
+            <ScrollView style={styles.propositionsContainer}>
+              {displayedStreetPropositions}
+            </ScrollView>
+          )}
         </View>
-        {streetPropositions.length > 0 && (
-          <ScrollView style={styles.propositionsContainer}>
-            {displayedStreetPropositions}
-          </ScrollView>
-        )}
-      </View>
+      )}
+
+      {props.page === "Map" && (
+        <>
+          <View style={styles.inputContainer_map}>
+            <FontAwesome name="search" size={20} color="#666" />
+            <TextInput
+              placeholder="Saisissez une adresse..."
+              placeholderTextColor="#999"
+              style={styles.textInput_map}
+              value={newAdress}
+              onChangeText={(value) => setNewAdress(value)}
+            />
+          </View>
+
+          {displayedStreetPropositions.length > 0 && (
+            <ScrollView style={styles.propositionsContainer_map}>
+              {displayedStreetPropositions}
+            </ScrollView>
+          )}
+        </>
+      )}
     </>
   );
 }
@@ -197,5 +237,37 @@ const styles = StyleSheet.create({
     padding: 5,
     minHeight: 100,
     maxHeight: 200,
+  },
+  inputContainer_map: {
+    width: "100%",
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 10,
+    padding: 12,
+    backgroundColor: "#f9f9f9",
+  },
+  propositionsContainer_map: {
+    width: "100%",
+    minHeight: 100,
+    maxHeight: 200,
+    marginTop: 10,
+    marginBottom: 10,
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: "#ec6e5b",
+  },
+  textInput_map: {
+    flex: 1,
+    marginLeft: 10,
+    fontSize: 15,
+    color: "#333",
+  },
+  propositionText: {
+    flex: 1,
+    fontSize: 14,
+    color: "#333",
   },
 });

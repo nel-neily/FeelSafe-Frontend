@@ -18,6 +18,7 @@ import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { importMarkers } from "../reducers/markers";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
 import { utilFetch, utilGetFetch } from "../utils/function";
+import AddressSearch from "../components/AdressSearch";
 
 export default function MapScreen() {
   const [position, setPosition] = useState(null);
@@ -117,69 +118,6 @@ export default function MapScreen() {
     })();
     fetchMarkers(); // récupération au montage
   }, []);
-
-  // --- Fonction pour récupérer les adresses depuis l'API - Reprise de ProfileScreen.js ---
-  // Elle affiche les propositions d'addresses renvoyés par l'API
-  // @params:string
-  const fetchAddresses = async (address) => {
-    if (!address || address.trim() === "") {
-      return;
-    }
-    try {
-      const response = await fetch(
-        `https://data.geopf.fr/geocodage/search?q=${encodeURIComponent(
-          address
-        )}`
-      );
-      const data = await response.json();
-      const allFeatures = data.features || [];
-      const streetsNames = allFeatures.map((feature) => {
-        const { housenumber, street, city, postcode } = feature.properties;
-        const [longitude, latitude] = feature.geometry.coordinates; // L'API retourne [longitude, latitude]
-        return {
-          housenumber,
-          street,
-          city,
-          postcode,
-          latitude,
-          longitude,
-        };
-      });
-      setAddressPropositions(streetsNames);
-    } catch (error) {
-      console.error("Erreur lors de la récupération des adresses:", error);
-      setAddressPropositions([]);
-    }
-  };
-
-  // --- useEffect avec debounce pour l'API - Repris de ProfileScreen.js ---
-  // Ce useEffect se déclenche à chaque input sur le clavier pour trouver une addresse en API
-  // Elle attend 0.5 seconde lorsque l'utilisateur ne tape plus pour afficher des propositions
-  useEffect(() => {
-    // Nettoyer le timer précédent s'il existe
-    if (debounceTimer.current) {
-      clearTimeout(debounceTimer.current);
-    }
-
-    // Si l'adresse est vide, réinitialiser les propositions
-    if (!destinationInput || destinationInput.trim() === "") {
-      setAddressPropositions([]);
-      return;
-    }
-
-    // Créer un nouveau timer (réduit à 500ms)
-    debounceTimer.current = setTimeout(() => {
-      fetchAddresses(destinationInput);
-    }, 500);
-
-    // Cleanup: annuler le timer si le composant se démonte ou si destinationInput change
-    return () => {
-      if (debounceTimer.current) {
-        clearTimeout(debounceTimer.current);
-      }
-    };
-    // Le useEffect se déclenche à chaque nouvelle frappe du user
-  }, [destinationInput]);
 
   // --- Fonction pour centrer la carte sur une destination ---
   const goToDestination = (latitude, longitude) => {
@@ -318,7 +256,6 @@ export default function MapScreen() {
     }
     // Autre signalement
     return "#A66CFF";
-    
   };
 
   return (
@@ -595,57 +532,7 @@ export default function MapScreen() {
             <View style={styles.modalContent}>
               <Text style={styles.modalTitle}>Choisir une destination</Text>
 
-              {/* Input de recherche d'adresse */}
-              <View style={styles.inputContainer}>
-                <FontAwesome name="search" size={20} color="#666" />
-                <TextInput
-                  placeholder="Saisissez une adresse..."
-                  placeholderTextColor="#999"
-                  style={styles.textInput}
-                  value={destinationInput}
-                  onChangeText={(value) => setDestinationInput(value)}
-                />
-              </View>
-
-              {/* --- Propositions du store redux - Reprise de ProfileScreen.js --- */}
-              {addressPropositions.length > 0 && (
-                <ScrollView style={styles.propositionsContainer}>
-                  {addressPropositions.map((adresse, i) => {
-                    const combinedAdress = `${
-                      adresse.housenumber ? adresse.housenumber : ""
-                    } ${adresse.street} - ${adresse.city} - ${
-                      adresse.postcode
-                    }`;
-                    const formattedAdress =
-                      combinedAdress.length > 45
-                        ? combinedAdress.slice(0, 45)
-                        : combinedAdress;
-                    return (
-                      <TouchableOpacity
-                        key={i}
-                        style={styles.propositionItem}
-                        onPress={() =>
-                          goToDestination(
-                            adresse.latitude,
-                            adresse.longitude,
-                            formattedAdress
-                          )
-                        }
-                      >
-                        <FontAwesome
-                          name="map-marker"
-                          size={16}
-                          color="#ec6e5b"
-                        />
-                        <Text style={styles.propositionText}>
-                          {formattedAdress}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </ScrollView>
-              )}
-
+              <AddressSearch page={"Map"} goToDestination={goToDestination} />
               {/* --- Section Adresses favorites --- */}
               <View style={{ width: "100%", marginTop: 20 }}>
                 <Text style={styles.sectionTitle}>Vos adresses favorites</Text>
@@ -964,8 +851,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginVertical: 3,
     width: "100%",
-    borderWidth: 0.8, 
-    borderColor: "#E57373", 
+    borderWidth: 0.8,
+    borderColor: "#E57373",
   },
   dangerHighText: {
     color: "#333",
@@ -979,8 +866,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginVertical: 3,
     width: "100%",
-    borderWidth: 0.8, 
-    borderColor: "#FFB74D", 
+    borderWidth: 0.8,
+    borderColor: "#FFB74D",
   },
   dangerMediumText: {
     color: "#333",
@@ -994,8 +881,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginVertical: 3,
     width: "100%",
-    borderWidth: 0.8, 
-    borderColor: "#FFCC80", 
+    borderWidth: 0.8,
+    borderColor: "#FFCC80",
   },
   dangerLowText: {
     color: "#333",
@@ -1005,15 +892,15 @@ const styles = StyleSheet.create({
   },
   // --- Styles pour les boutons Autre signalement et Annuler ---
   otherButton: {
-    backgroundColor: "#f9f9f9", 
-    padding: 10, 
+    backgroundColor: "#f9f9f9",
+    padding: 10,
     borderRadius: 8,
     marginVertical: 4,
     marginTop: 10,
     width: "100%",
     alignItems: "center",
-    borderWidth: 0.8, 
-    borderColor: "#B39DDB", 
+    borderWidth: 0.8,
+    borderColor: "#B39DDB",
   },
   otherButtonText: {
     color: "#333",
