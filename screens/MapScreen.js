@@ -17,10 +17,9 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { importMarkers } from "../reducers/markers";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
+import { utilFetch, utilGetFetch } from "../utils/function";
 
 export default function MapScreen() {
-  const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
-
   const [position, setPosition] = useState(null);
   const [marker, setMarker] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -35,8 +34,6 @@ export default function MapScreen() {
   const [destinationMarker, setDestinationMarker] = useState(null); // Coordonnées de la destination
 
   const mapRef = useRef(null);
-
-  // const [markersFromDB, setMarkersFromDB] = useState([]);
 
   const markersInStore = useSelector((state) => state.marker.markers);
   const user = useSelector((state) => state.user.value);
@@ -54,19 +51,20 @@ export default function MapScreen() {
   const [isCustomRiskModal, setIsCustomRiskModal] = useState(false);
   const [customRiskText, setCustomRiskText] = useState("");
 
+  // Cette fonction fetch les markers en DB et les stock sur redux
   const fetchMarkers = async () => {
-    fetch(`${BACKEND_URL}/markers`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.result) {
-          dispatch(importMarkers(data.markers)); // on stocke dans le store
-        }
-      })
-      .catch((err) => {
-        console.log("Erreur fetch markers", err);
-      });
+    try {
+      const url = "/markers";
+      const data = await utilGetFetch(url);
+      if (data.result) {
+        dispatch(importMarkers(data.markers)); // on stocke dans le store
+      }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
+  // Cette variable affiche les markers depuis le store
   const displayMarkersFromDB = markersInStore.map((m) => {
     return (
       <Marker
@@ -81,10 +79,8 @@ export default function MapScreen() {
     );
   });
 
-  useEffect(() => {
-    fetchMarkers(); // récupération au montage
-  }, []);
-
+  // Ce useEffect demande l'autorisation de géolocalisation au user
+  // Ce useEffect appelle la fonction fetchMarkers() en dernier
   useEffect(() => {
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -101,21 +97,30 @@ export default function MapScreen() {
         });
 
         // Suivi des mouvements
-        Location.watchPositionAsync({ distanceInterval: 10 }, (location) => {
-          setPosition(location.coords);
+        Location.watchPositionAsync(
+          { distanceInterval: 20, accuracy: Location.Accuracy.Low },
+          (location) => {
+            if (location.coords.speed < 1) {
+              return;
+            }
+            setPosition(location.coords);
 
-          mapRef.current?.animateToRegion({
-            latitude: location.coords.latitude,
-            longitude: location.coords.longitude,
-            latitudeDelta: 0.01,
-            longitudeDelta: 0.01,
-          });
-        });
+            mapRef.current?.animateToRegion({
+              latitude: location.coords.latitude,
+              longitude: location.coords.longitude,
+              latitudeDelta: 0.01,
+              longitudeDelta: 0.01,
+            });
+          }
+        );
       }
     })();
+    fetchMarkers(); // récupération au montage
   }, []);
 
   // --- Fonction pour récupérer les adresses depuis l'API - Reprise de ProfileScreen.js ---
+  // Elle affiche les propositions d'addresses renvoyés par l'API
+  // @params:string
   const fetchAddresses = async (address) => {
     if (!address || address.trim() === "") {
       return;
@@ -148,6 +153,8 @@ export default function MapScreen() {
   };
 
   // --- useEffect avec debounce pour l'API - Repris de ProfileScreen.js ---
+  // Ce useEffect se déclenche à chaque input sur le clavier pour trouver une addresse en API
+  // Elle attend 0.5 seconde lorsque l'utilisateur ne tape plus pour afficher des propositions
   useEffect(() => {
     // Nettoyer le timer précédent s'il existe
     if (debounceTimer.current) {
@@ -202,16 +209,25 @@ export default function MapScreen() {
     setIsDestinationModal(false);
   };
 
-  // Fonction marker long press
+  // Fonction de création marker après un long press
+  // Elle déclenche une modale pour personnaliser le marker
+  // @params: event React Native Maps qui contient des coordonnées
   const handleLongPress = (event) => {
     const newCoords = event.nativeEvent.coordinate;
     setMarker(newCoords);
     setIsModalVisible(true);
   };
 
-  // Fonction sélectionner type de signalement
-  const handleSelectRisk = (risk) => {
+  // Cette fonction sert à la création d'un marker
+  // Elle permet de construire le marker et de le personnaliser et de l'ajouter en DB
+  // @params: string
+
+  const handleSelectRisk = async (risk) => {
     if (!user.id) return;
+
+    if (risk === "Autre signalement" && customRiskText.trim().length === 0) {
+      return alert("Votre message est vide.");
+    }
 
     const color = getRiskColor(risk);
 
@@ -220,6 +236,7 @@ export default function MapScreen() {
       longitude: position.longitude,
     };
 
+    // Construit le marker avec des coordonnées soit héritées d'un LongPress, soit de notre position actuelle
     const newMarker = {
       latitude: marker ? marker.latitude : markerCoords.latitude,
       longitude: marker ? marker.longitude : markerCoords.longitude,
@@ -227,42 +244,38 @@ export default function MapScreen() {
       color: color,
       userId: user.id,
     };
-    fetch(`${BACKEND_URL}/markers/addmarkers`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newMarker),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.result) {
-          fetchMarkers();
-          setMarker(null);
-          setIsModalVisible(false);
-        }
-      })
-      .catch((err) => console.log("Erreur ajout marker", err));
+    try {
+      const url = "/markers/addmarkers";
+      const data = await utilFetch(url, "POST", newMarker);
+      if (data.result) {
+        fetchMarkers();
+        setMarker(null);
+        setIsModalVisible(false);
+        setCustomRiskText("");
+        setIsCustomRiskModal(false);
+      }
+    } catch (err) {
+      console.error("Erreur ajout marker", err);
+    }
   };
 
-  const handleMarkerPress = (marker) => {
+  // Cette fonction supprime un marker et a une vérification => l'id utilisateur est identique à celui ramené par le marker
+  // @params: marker(id, color, coordonnées, et la clé étrangère user
+  const handleMarkerPress = async (marker) => {
     if (marker.users._id !== user.id) {
-      // temporaire
       return alert("Vous ne pouvez pas supprimer ce signalement");
     }
-
-    fetch(`${BACKEND_URL}/markers/${marker._id}`, {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: user.id }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.result) {
-          fetchMarkers(); // Refresh la map
-          setSelectedMarker(null); // ferme le popup
-        }
-      });
+    try {
+      const url = `/markers/${marker._id}`;
+      const data = await utilFetch(url, "DELETE", { userId: user.id });
+      if (data.result) {
+        fetchMarkers(); // Refresh la map
+        setSelectedMarker(null); // ferme le popup
+      }
+    } catch (err) {
+      console.error("Une erreur s'est produite lors du delete du pin");
+    }
   };
-
   if (!position) {
     return (
       <MapView
@@ -278,6 +291,9 @@ export default function MapScreen() {
     );
   }
 
+  // Cette fonction permet de retourner une couleur en fonction du params risk que l'on lui passe
+  // @params risk: string
+  // @return: string
   const getRiskColor = (risk) => {
     // Danger élevé
     if (["Agression", "Vol", "Harcèlement", "Incendie"].includes(risk)) {
@@ -296,11 +312,7 @@ export default function MapScreen() {
     }
     // Danger faible
     if (
-      [
-        "Animal sauvage",
-        "Zone mal éclairée",
-        "Route endommagée",
-      ].includes(risk)
+      ["Animal sauvage", "Zone mal éclairée", "Route endommagée"].includes(risk)
     ) {
       return "#FFEB3B";
     }
@@ -491,7 +503,7 @@ export default function MapScreen() {
                   </TouchableOpacity>
                 ))}
               </ScrollView>
-              
+
               <TouchableOpacity
                 style={styles.otherButton}
                 onPress={() => {
@@ -499,9 +511,7 @@ export default function MapScreen() {
                   setIsCustomRiskModal(true);
                 }}
               >
-                <Text style={styles.otherButtonText}>
-                  Autre signalement
-                </Text>
+                <Text style={styles.otherButtonText}>Autre signalement</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.cancelButton}
@@ -721,37 +731,7 @@ export default function MapScreen() {
 
               <TouchableOpacity
                 style={[styles.modalButton, { marginTop: 20 }]}
-                onPress={() => {
-                  if (customRiskText.trim().length === 0) {
-                    return alert("Votre message est vide.");
-                  }
-
-                  if (!marker || !user.id) return;
-
-                  const newMarker = {
-                    latitude: marker.latitude,
-                    longitude: marker.longitude,
-                    riskType: customRiskText,
-                    color: getRiskColor('Autre signalement'), // Autre signalement
-                    userId: user.id,
-                  };
-
-                  fetch(`${BACKEND_URL}/markers/addmarkers`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(newMarker),
-                  })
-                    .then((res) => res.json())
-                    .then((data) => {
-                      if (data.result) {
-                        fetchMarkers();
-                        setMarker(null);
-                        setCustomRiskText("");
-                        setIsCustomRiskModal(false);
-                      }
-                    })
-                    .catch((err) => console.log("Erreur ajout marker", err));
-                }}
+                onPress={() => handleSelectRisk("Autre signalement")}
               >
                 <Text style={[styles.modalButtonText, { color: "#fff" }]}>
                   Valider
@@ -770,7 +750,6 @@ export default function MapScreen() {
             </View>
           </View>
         </Modal>
-
 
         {/* --- Bouton "+" Menu Principal --- */}
         <TouchableOpacity
@@ -981,46 +960,46 @@ const styles = StyleSheet.create({
   // --- Styles pour les 3 catégories de dangers ---
   dangerHighButton: {
     backgroundColor: "#f9f9f9",
-    padding: 8, 
-    borderRadius: 8, 
-    marginVertical: 3, 
+    padding: 8,
+    borderRadius: 8,
+    marginVertical: 3,
     width: "100%",
     borderWidth: 0.8, 
     borderColor: "#E57373", 
   },
   dangerHighText: {
     color: "#333",
-    fontSize: 14, 
+    fontSize: 14,
     fontWeight: "600",
     textAlign: "center",
   },
   dangerMediumButton: {
-    backgroundColor: "#f9f9f9", 
-    padding: 8, 
+    backgroundColor: "#f9f9f9",
+    padding: 8,
     borderRadius: 8,
-    marginVertical: 3, 
+    marginVertical: 3,
     width: "100%",
     borderWidth: 0.8, 
     borderColor: "#FFB74D", 
   },
   dangerMediumText: {
     color: "#333",
-    fontSize: 14, 
+    fontSize: 14,
     fontWeight: "600",
     textAlign: "center",
   },
   dangerLowButton: {
-    backgroundColor: "#f9f9f9", 
-    padding: 8, 
-    borderRadius: 8, 
-    marginVertical: 3, 
+    backgroundColor: "#f9f9f9",
+    padding: 8,
+    borderRadius: 8,
+    marginVertical: 3,
     width: "100%",
     borderWidth: 0.8, 
     borderColor: "#FFCC80", 
   },
   dangerLowText: {
     color: "#333",
-    fontSize: 14, 
+    fontSize: 14,
     fontWeight: "600",
     textAlign: "center",
   },
@@ -1043,8 +1022,8 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   cancelButton: {
-    backgroundColor: "#6C5364", 
-    padding: 10, 
+    backgroundColor: "#6C5364",
+    padding: 10,
     borderRadius: 8,
     marginVertical: 4,
     width: "100%",

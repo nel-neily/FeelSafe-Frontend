@@ -11,13 +11,13 @@ import {
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
-import { useEffect, useState, useRef } from "react";
+import { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { updateUser, logoutUser } from "../reducers/user";
 import { Alert } from "react-native";
 import { utilFetch } from "../utils/function";
-
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import AddressSearch from "../components/AdressSearch";
 
 export default function ProfileScreen({ navigation }) {
   // GLOBALS VARIABLES
@@ -40,24 +40,8 @@ export default function ProfileScreen({ navigation }) {
   //   GESTION DU DARKMODE
   const [darkMode, setDarkMode] = useState(false);
 
-  //   GESTION DES ADRESSES FAVORITES
-  //   un input vient requêté une API Géoloc française toutes les secondes où le user ne tape plus
-  //   une collection de propositions viennent s'afficher et le user n'a qu'à cliquer sur uen adresse pour qu'elle s'enregistre
-  const [newAdress, setNewAdress] = useState("");
-  const [streetPropositions, setStreetPropositions] = useState([]);
   const adresses = user.addresses;
 
-  const addAddress = async (newAddress, coords) => {
-    const url = `/users/update?addresses=${newAddress}`;
-    const data = await utilFetch(url, "POST", {
-      email: user.email,
-      coordinates: coords.coordinates,
-    });
-
-    dispatch(updateUser({ addresses: data.addresses }));
-    setNewAdress("");
-    setStreetPropositions([]);
-  };
   const removeAdress = async (addressToDelete) => {
     const url = `/users/update?addresses=${addressToDelete}`;
     const data = await utilFetch(url, "DELETE", { email: user.email });
@@ -73,87 +57,6 @@ export default function ProfileScreen({ navigation }) {
       </View>
     );
   });
-
-  const displayedStreetPropositions = streetPropositions.map((adresse, i) => {
-    const combinedAdress = `${adresse.housenumber ? adresse.housenumber : ""} ${
-      adresse.street
-    } - ${adresse.city} - ${adresse.postcode}`;
-    const formattedAdress =
-      combinedAdress.length > 45 ? combinedAdress.slice(0, 45) : combinedAdress;
-
-    return (
-      <TouchableOpacity
-        key={i}
-        style={styles.propositionItem}
-        onPress={() =>
-          addAddress(combinedAdress, { coordinates: adresse.coordinates })
-        }
-      >
-        <FontAwesome name="map-marker" size={16} color="#ec6e5b" />
-        <Text style={styles.propositionText}>{formattedAdress}</Text>
-      </TouchableOpacity>
-    );
-  });
-
-  //   Le fetch à l'API se fait dans une requête async appelée par le useEffect plus bas
-
-  const fetchAdresses = async (address) => {
-    if (!address || address.trim() === "") {
-      return;
-    }
-    try {
-      const response = await fetch(
-        `https://data.geopf.fr/geocodage/search?q=${encodeURIComponent(
-          address
-        )}`
-      );
-      const data = await response.json();
-      const allFeatures = data.features;
-      const streetsNames = allFeatures.map((feature) => {
-        const { housenumber, street, city, postcode } = feature.properties;
-        const { coordinates } = feature.geometry;
-        return {
-          housenumber,
-          street,
-          city,
-          postcode,
-          coordinates,
-        };
-      });
-
-      setStreetPropositions(streetsNames);
-    } catch (error) {
-      console.error("Erreur lors de la récupération des adresses:", error);
-    }
-  };
-  //   La fonction debounce permettra de ne pas actualiser la recherche à chaque frappe mais après une seconde d'arrêt de frappe
-
-  const debounceTimer = useRef(null);
-
-  useEffect(() => {
-    // Nettoyer le timer précédent s'il existe
-    if (debounceTimer.current) {
-      clearTimeout(debounceTimer.current);
-    }
-
-    // Si l'adresse est vide, ne rien faire
-    if (!newAdress || newAdress.trim() === "") {
-      return;
-    }
-
-    // Créer un nouveau timer
-    debounceTimer.current = setTimeout(() => {
-      fetchAdresses(newAdress);
-    }, 1000);
-
-    // Cleanup: annuler le timer si le composant se démonte ou si newAdress change
-    return () => {
-      if (debounceTimer.current) {
-        clearTimeout(debounceTimer.current);
-      }
-    };
-    // Le useEffect se déclenche à chaque nouvelle frappe du user
-  }, [newAdress]);
 
   //   GESTION DE LA DECONNECTION
   const removeValue = async () => {
@@ -244,27 +147,9 @@ export default function ProfileScreen({ navigation }) {
                   </>
                 )}
               </View>
-              <View style={styles.addressSection}>
-                <Text style={styles.sectionTitle}>
-                  Adresses enregistrées
-                </Text>
-                <View style={styles.addressInputContainer}>
-                  <FontAwesome name="search" size={16} color="rgba(255, 255, 255, 0.7)" />
-                  <TextInput
-                    placeholder="Nouvelle adresse"
-                    placeholderTextColor="rgba(255, 255, 255, 0.5)"
-                    style={styles.addressInput}
-                    value={newAdress}
-                    onChangeText={(value) => setNewAdress(value)}
-                  />
-                </View>
-
-                {streetPropositions.length > 0 && (
-                  <ScrollView style={styles.propositionsContainer}>
-                    {displayedStreetPropositions}
-                  </ScrollView>
-                )}
-              </View>
+                  <AddressSearch/>
+                
+              
               <View style={styles.addressListContainer}>
                 {displayedAdresses.length > 0 ? (
                   displayedAdresses
@@ -278,21 +163,6 @@ export default function ProfileScreen({ navigation }) {
               >
                 <Text style={styles.text_white}>Se déconnecter</Text>
               </TouchableOpacity>
-              {/* <TouchableOpacity
-                style={[
-                  styles.button_main_features,
-                  { flexDirection: "row", justifyContent: "space-around" },
-                ]}
-                onPress={() => setDarkMode(!darkMode)}
-              >
-                <Text style={styles.text_white}>Mode sombre</Text>
-                {darkMode && (
-                  <FontAwesome name="toggle-off" color={"#fff"} size={30} />
-                )}
-                {darkMode || (
-                  <FontAwesome name="toggle-on" color={"#fff"} size={30} />
-                )}
-              </TouchableOpacity> */}
               <TouchableOpacity
                 style={styles.button_delete_account}
                 onPress={() => setEraseAccountModal(!eraseAccountModal)}
