@@ -18,7 +18,6 @@ import { Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { utilFetch } from "../utils/function";
 
-const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 export default function LoginScreen() {
   const navigation = useNavigation();
   const dispatch = useDispatch();
