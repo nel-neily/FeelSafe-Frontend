@@ -13,6 +13,7 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import MapView, { Marker } from "react-native-maps";
 import * as Location from "expo-location";
+import { MaterialIcons } from "@expo/vector-icons";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { importMarkers } from "../reducers/markers";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
@@ -67,13 +68,14 @@ export default function MapScreen() {
   const displayMarkersFromDB = markersInStore.map((m) => {
     return (
       <Marker
-        key={m._id} //  On utilise l'id unique MongoDB
+        key={m._id}
         coordinate={{ latitude: m.latitude, longitude: m.longitude }}
-        pinColor={m.color}
         title={m.riskType}
         onPress={(e) => setSelectedMarker(m)}
         onDeselect={() => setSelectedMarker(null)}
-      />
+      >
+        <MaterialIcons name="priority-high" size={50} color={m.color} />
+      </Marker>
     );
   });
 
@@ -315,7 +317,8 @@ export default function MapScreen() {
       return "#FFEB3B";
     }
     // Autre signalement
-    return "purple";
+    return "#A66CFF";
+    
   };
 
   return (
@@ -961,8 +964,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginVertical: 3,
     width: "100%",
-    borderWidth: 0.5,
-    borderColor: "#E57373",
+    borderWidth: 0.8, 
+    borderColor: "#E57373", 
   },
   dangerHighText: {
     color: "#333",
@@ -976,8 +979,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginVertical: 3,
     width: "100%",
-    borderWidth: 0.5,
-    borderColor: "#FFB74D",
+    borderWidth: 0.8, 
+    borderColor: "#FFB74D", 
   },
   dangerMediumText: {
     color: "#333",
@@ -991,8 +994,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginVertical: 3,
     width: "100%",
-    borderWidth: 0.5,
-    borderColor: "#FFCC80",
+    borderWidth: 0.8, 
+    borderColor: "#FFCC80", 
   },
   dangerLowText: {
     color: "#333",
@@ -1002,13 +1005,15 @@ const styles = StyleSheet.create({
   },
   // --- Styles pour les boutons Autre signalement et Annuler ---
   otherButton: {
-    backgroundColor: "#f2f2f2",
-    padding: 10,
+    backgroundColor: "#f9f9f9", 
+    padding: 10, 
     borderRadius: 8,
     marginVertical: 4,
     marginTop: 10,
     width: "100%",
     alignItems: "center",
+    borderWidth: 0.8, 
+    borderColor: "#B39DDB", 
   },
   otherButtonText: {
     color: "#333",
