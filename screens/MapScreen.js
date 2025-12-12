@@ -3,7 +3,7 @@ import {
   StyleSheet,
   Dimensions,
   View,
-  Text, 
+  Text,
   Modal,
   TouchableOpacity,
   ScrollView,
@@ -23,7 +23,6 @@ export default function MapScreen() {
   const [position, setPosition] = useState(null);
   const [marker, setMarker] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  
 
   // --- État pour la modale Menu du bouton '+' ---
   const [isBtnMenuModal, setIsBtnMenuModal] = useState(false);
@@ -213,20 +212,19 @@ export default function MapScreen() {
     if (!user.id) return;
 
     const color = getRiskColor(risk);
-    
-        const markerCoords = {
+
+    const markerCoords = {
       latitude: position.latitude,
       longitude: position.longitude,
     };
 
     const newMarker = {
-      latitude: marker? marker.latitude: markerCoords.latitude,
-      longitude: marker? marker.longitude: markerCoords.longitude,
+      latitude: marker ? marker.latitude : markerCoords.latitude,
+      longitude: marker ? marker.longitude : markerCoords.longitude,
       riskType: risk,
       color: color,
       userId: user.id,
     };
-
     fetch(`${BACKEND_URL}/markers/addmarkers`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -521,7 +519,6 @@ export default function MapScreen() {
         >
           <View style={styles.modalContainer}>
             <View style={styles.modalContent}>
-
               {/* Bouton Signaler un danger */}
               <TouchableOpacity
                 style={[styles.menuButton, { marginVertical: 10 }]}
@@ -530,7 +527,12 @@ export default function MapScreen() {
                   setIsModalVisible(true);
                 }}
               >
-                <FontAwesome name="exclamation-triangle" size={20} color="#ec6e5b" style={{ marginRight: 10 }} />
+                <FontAwesome
+                  name="exclamation-triangle"
+                  size={20}
+                  color="#ec6e5b"
+                  style={{ marginRight: 10 }}
+                />
                 <Text style={styles.menuButtonText}>Signaler un danger</Text>
               </TouchableOpacity>
 
@@ -542,16 +544,28 @@ export default function MapScreen() {
                   setIsDestinationModal(true);
                 }}
               >
-                <FontAwesome name="map-marker" size={20} color="#ec6e5b" style={{ marginRight: 10 }} />
-                <Text style={styles.menuButtonText}>Ajouter une destination</Text>
+                <FontAwesome
+                  name="map-marker"
+                  size={20}
+                  color="#ec6e5b"
+                  style={{ marginRight: 10 }}
+                />
+                <Text style={styles.menuButtonText}>
+                  Ajouter une destination
+                </Text>
               </TouchableOpacity>
 
               {/* Bouton Annuler */}
               <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: "#6C5364", marginTop: 10 }]}
+                style={[
+                  styles.modalButton,
+                  { backgroundColor: "#6C5364", marginTop: 10 },
+                ]}
                 onPress={() => setIsBtnMenuModal(false)}
               >
-                <Text style={[styles.modalButtonText, { color: "#fff" }]}>Annuler</Text>
+                <Text style={[styles.modalButtonText, { color: "#fff" }]}>
+                  Annuler
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
