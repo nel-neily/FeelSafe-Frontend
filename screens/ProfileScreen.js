@@ -65,27 +65,11 @@ export default function ProfileScreen({ navigation }) {
   };
   const displayedAdresses = adresses.map((adresse, i) => {
     return (
-      <View
-        style={{ flexDirection: "row", justifyContent: "flex-start" }}
-        key={i}
-      >
-        <Text
-          style={[
-            styles.text_white,
-            {
-              height: 50,
-              width: "90%",
-            },
-          ]}
-        >
-          {adresse.address}
-        </Text>
-        <FontAwesome
-          name="trash"
-          color={"#fff"}
-          size={20}
-          onPress={() => removeAdress(adresse.address)}
-        />
+      <View style={styles.addressItem} key={i}>
+        <Text style={styles.addressText}>{adresse.address}</Text>
+        <TouchableOpacity onPress={() => removeAdress(adresse.address)}>
+          <FontAwesome name="trash" color={"rgba(255, 255, 255, 0.7)"} size={18} />
+        </TouchableOpacity>
       </View>
     );
   });
@@ -100,19 +84,13 @@ export default function ProfileScreen({ navigation }) {
     return (
       <TouchableOpacity
         key={i}
-        style={{
-          height: 35,
-          justifyContent: "center",
-          paddingLeft: 10,
-          borderWidth: 0.5,
-          borderColor: "gray",
-          formattedAdress,
-        }}
+        style={styles.propositionItem}
         onPress={() =>
           addAddress(combinedAdress, { coordinates: adresse.coordinates })
         }
       >
-        <Text>{formattedAdress}</Text>
+        <FontAwesome name="map-marker" size={16} color="#ec6e5b" />
+        <Text style={styles.propositionText}>{formattedAdress}</Text>
       </TouchableOpacity>
     );
   });
@@ -266,54 +244,36 @@ export default function ProfileScreen({ navigation }) {
                   </>
                 )}
               </View>
-              <View style={{ flexDirection: "column", gap: 20, width: "100%" }}>
-                <Text style={[styles.text_white, { fontSize: 18 }]}>
+              <View style={styles.addressSection}>
+                <Text style={styles.sectionTitle}>
                   Adresses enregistrées
                 </Text>
-                <View
-                  style={{
-                    flexDirection: "row",
-                    justifyContent: "flex-start",
-                    width: "100%",
-                    borderWidth: 1,
-                    borderColor: "white",
-                    borderRadius: 10,
-                    paddingLeft: 5,
-                    height: 45,
-                  }}
-                >
+                <View style={styles.addressInputContainer}>
+                  <FontAwesome name="search" size={16} color="rgba(255, 255, 255, 0.7)" />
                   <TextInput
-                    placeholder="Nouvelle addresse"
-                    placeholderTextColor="#fff"
-                    style={{
-                      width: "80%",
-                      height: "100%",
-                      color: "#fff",
-                    }}
+                    placeholder="Nouvelle adresse"
+                    placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                    style={styles.addressInput}
                     value={newAdress}
                     onChangeText={(value) => setNewAdress(value)}
-                  ></TextInput>
+                  />
                 </View>
 
                 {streetPropositions.length > 0 && (
-                  <ScrollView
-                    style={{
-                      height: 150,
-                      width: "100%",
-                      backgroundColor: "#fff",
-                      position: "absolute",
-                      top: 110,
-                      borderRadius: 10,
-                      zIndex: 10,
-                    }}
-                  >
+                  <ScrollView style={styles.propositionsContainer}>
                     {displayedStreetPropositions}
                   </ScrollView>
                 )}
               </View>
-              <ScrollView>{displayedAdresses}</ScrollView>
+              <View style={styles.addressListContainer}>
+                {displayedAdresses.length > 0 ? (
+                  displayedAdresses
+                ) : (
+                  <Text style={styles.emptyText}>Aucune adresse enregistrée</Text>
+                )}
+              </View>
               <TouchableOpacity
-                style={styles.button_main_features}
+                style={[styles.button_main_features, { marginTop: "auto" }]}
                 onPress={() => logout()}
               >
                 <Text style={styles.text_white}>Se déconnecter</Text>
@@ -334,15 +294,10 @@ export default function ProfileScreen({ navigation }) {
                 )}
               </TouchableOpacity> */}
               <TouchableOpacity
-                style={[
-                  styles.button_main_features,
-                  {
-                    backgroundColor: "red",
-                  },
-                ]}
+                style={styles.button_delete_account}
                 onPress={() => setEraseAccountModal(!eraseAccountModal)}
               >
-                <Text style={[styles.text_white, { fontSize: 20 }]}>
+                <Text style={styles.text_delete}>
                   Supprimer votre compte
                 </Text>
               </TouchableOpacity>
@@ -358,28 +313,29 @@ export default function ProfileScreen({ navigation }) {
                   <View style={styles.modalView}>
                     <Text
                       style={{
-                        color: "#fff",
-                        fontSize: 24,
+                        color: "#333",
+                        fontSize: 18,
                         textAlign: "center",
+                        marginBottom: 20,
                       }}
                     >
-                      Cette étape est définitive, voulez vous supprimer votre
-                      compte?
+                      Cette étape est définitive, voulez-vous supprimer votre
+                      compte ?
                     </Text>
                     <TouchableOpacity
-                      style={styles.modalText}
+                      style={styles.buttonDeleteConfirm}
                       onPress={() => deleteAccount()}
                     >
-                      <Text style={{ color: "red" }}>
-                        Suppression du compte
+                      <Text style={{ color: "#fff", fontWeight: "600" }}>
+                        Confirmer la suppression
                       </Text>
                     </TouchableOpacity>
                     <TouchableOpacity
-                      style={[styles.button, styles.buttonClose]}
+                      style={styles.buttonCancelDelete}
                       onPress={() => setEraseAccountModal(!eraseAccountModal)}
                     >
-                      <Text style={[styles.textStyle, { color: "black" }]}>
-                        Annuler la suppression
+                      <Text style={{ color: "#333", fontWeight: "600" }}>
+                        Annuler
                       </Text>
                     </TouchableOpacity>
                   </View>
@@ -433,10 +389,10 @@ const styles = StyleSheet.create({
     flex: 1,
     boxSizing: "border-box",
     flexDirection: "column",
-    justifyContent: "space-around",
+    justifyContent: "flex-start", 
     alignItems: "center",
-    padding: 20,
-    gap: 20,
+    padding: 15, 
+    gap: 10, 
   },
   background: {
     flex: 1,
@@ -448,12 +404,14 @@ const styles = StyleSheet.create({
   },
   username_view: {
     flexDirection: "row",
-    width: "80%",
-    height: 50,
-    borderBottomColor: "#fff",
-    borderBottomWidth: 2,
-    padding: 2,
-    justifyContent: "space-around",
+    width: "90%",
+    minHeight: 50,
+    borderBottomWidth: 0.5, 
+    borderBottomColor: "rgba(255, 255, 255, 0.4)", 
+    paddingBottom: 10,
+    justifyContent: "center", 
+    alignItems: "center",
+    gap: 15,
   },
   text_white: {
     color: "white",
@@ -461,11 +419,12 @@ const styles = StyleSheet.create({
   button_main_features: {
     height: 50,
     width: "80%",
-    borderRadius: 10,
+    borderRadius: 8,
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 2,
-    borderColor: "#fff",
+    borderWidth: 0.5,
+    borderColor: "#ddd",
+    backgroundColor: "rgba(255, 255, 255, 0.1)", 
   },
   centeredView: {
     flex: 1,
@@ -473,12 +432,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   modalView: {
-    width: "75%",
-    height: "50%",
+    width: "85%",
     margin: 20,
-    backgroundColor: "red",
-    borderRadius: 20,
-    padding: 35,
+    backgroundColor: "#fff",
+    borderRadius: 15,
+    padding: 25,
     justifyContent: "space-around",
     alignItems: "center",
     shadowColor: "#000",
@@ -515,5 +473,122 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
+  },
+  // Bouton "Supprimer votre compte"
+  button_delete_account: {
+    height: 45,
+    width: "80%",
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "transparent",
+    borderWidth: 0.5,
+    borderColor: "rgba(255, 255, 255, 0.3)", 
+  },
+  text_delete: {
+    color: "rgba(255, 255, 255, 0.6)", 
+    fontSize: 14,
+    fontWeight: "400",
+  },
+  // Boutons de la modale de suppression
+  buttonDeleteConfirm: {
+    width: "100%",
+    padding: 12,
+    borderRadius: 8,
+    backgroundColor: "#E57373", 
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  buttonCancelDelete: {
+    width: "100%",
+    padding: 12,
+    borderRadius: 8,
+    backgroundColor: "#f9f9f9",
+    alignItems: "center",
+    borderWidth: 0.5,
+    borderColor: "#ddd",
+  },
+  // Section adresses
+  addressSection: {
+    flexDirection: "column",
+    gap: 12,
+    width: "100%",
+    marginTop: 20, 
+  },
+  sectionTitle: {
+    color: "#fff",
+    fontSize: 16, 
+    fontWeight: "600",
+  },
+  addressInputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    width: "100%",
+    borderWidth: 0.5,
+    borderColor: "rgba(255, 255, 255, 0.3)",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    height: 45,
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
+    gap: 10,
+  },
+  addressInput: {
+    flex: 1,
+    color: "#fff",
+    fontSize: 15,
+  },
+  propositionsContainer: {
+    maxHeight: 150,
+    width: "100%",
+    backgroundColor: "#fff",
+    position: "absolute",
+    top: 75,
+    borderRadius: 10,
+    zIndex: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  propositionItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+    gap: 10,
+  },
+  propositionText: {
+    flex: 1,
+    fontSize: 14,
+    color: "#333",
+  },
+  addressListContainer: {
+    width: "100%",
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
+    borderRadius: 10,
+    padding: 5,
+    minHeight: 100,
+    maxHeight: 200,
+  },
+  addressItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 12,
+    borderBottomWidth: 0.5,
+    borderBottomColor: "rgba(255, 255, 255, 0.2)",
+    gap: 10,
+  },
+  addressText: {
+    flex: 1,
+    fontSize: 14,
+    color: "#fff",
+  },
+  emptyText: {
+    color: "rgba(255, 255, 255, 0.5)",
+    fontSize: 14,
+    textAlign: "center",
+    padding: 20,
   },
 });
