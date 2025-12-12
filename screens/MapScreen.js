@@ -277,9 +277,11 @@ export default function MapScreen() {
   }
 
   const getRiskColor = (risk) => {
-    if (["Agression", "Vol", "Harcelement", "Incendie"].includes(risk)) {
-      return "red"; // Danger élevé
+    // Danger élevé
+    if (["Agression", "Vol", "Harcèlement", "Incendie"].includes(risk)) {
+      return "#E57373";
     }
+    // Danger moyen
     if (
       [
         "Comportement suspect",
@@ -288,9 +290,20 @@ export default function MapScreen() {
         "Accident",
       ].includes(risk)
     ) {
-      return "orange"; // Danger moyen
+      return "#FFB74D";
     }
-    return "blue"; // Danger faible
+    // Danger faible
+    if (
+      [
+        "Animal sauvage",
+        "Zone mal éclairée",
+        "Route endommagée",
+      ].includes(risk)
+    ) {
+      return "#FFEB3B";
+    }
+    // Autre signalement
+    return "#9E9E9E";
   };
 
   return (
@@ -373,57 +386,54 @@ export default function MapScreen() {
                 style={{ width: "100%", maxHeight: 300 }}
                 contentContainerStyle={{ alignItems: "center" }}
               >
-                {/* 🔴 DANGER ÉLEVÉ */}
+                {/* 🔴 SIGNALLEMENT ÉLEVÉ */}
                 <Text
                   style={{
-                    color: "red",
+                    color: "#E57373",
                     fontWeight: "bold",
-                    marginVertical: 5,
+                    marginTop: 5,
+                    marginBottom: 8,
                     alignSelf: "flex-start",
                   }}
                 >
-                  Danger élevé
+                  Signalement élevé
                 </Text>
-                <View
-                  style={{
-                    height: 2,
-                    backgroundColor: "red",
-                    width: "100%",
-                    marginBottom: 10,
-                  }}
-                />
 
-                {["Agression", "Vol", "Harcelement", "Incendie"].map(
+                {["Agression", "Vol", "Harcèlement", "Incendie"].map(
                   (risk, index) => (
                     <TouchableOpacity
                       key={`high-${index}`}
-                      style={styles.modalButton}
+                      style={styles.dangerHighButton}
                       onPress={() => handleSelectRisk(risk)}
                     >
-                      <Text style={styles.modalButtonText}>{risk}</Text>
+                      <Text style={styles.dangerHighText}>{risk}</Text>
                     </TouchableOpacity>
                   )
                 )}
 
-                {/* 🟧 DANGER MOYEN */}
+                {/* Ligne pointillée de séparation */}
+                <View
+                  style={{
+                    width: "100%",
+                    height: 1,
+                    borderStyle: "dotted",
+                    borderWidth: 1,
+                    borderColor: "#ccc",
+                    marginVertical: 12,
+                  }}
+                />
+
+                {/* 🟧 SIGNALLEMENT MOYEN */}
                 <Text
                   style={{
-                    color: "orange",
+                    color: "#FFB74D",
                     fontWeight: "bold",
-                    marginVertical: 5,
+                    marginBottom: 8,
                     alignSelf: "flex-start",
                   }}
                 >
-                  Danger moyen
+                  Signalement moyen
                 </Text>
-                <View
-                  style={{
-                    height: 2,
-                    backgroundColor: "orange",
-                    width: "100%",
-                    marginBottom: 10,
-                  }}
-                />
 
                 {[
                   "Comportement suspect",
@@ -433,63 +443,68 @@ export default function MapScreen() {
                 ].map((risk, index) => (
                   <TouchableOpacity
                     key={`medium-${index}`}
-                    style={styles.modalButton}
+                    style={styles.dangerMediumButton}
                     onPress={() => handleSelectRisk(risk)}
                   >
-                    <Text style={styles.modalButtonText}>{risk}</Text>
+                    <Text style={styles.dangerMediumText}>{risk}</Text>
                   </TouchableOpacity>
                 ))}
 
-                {/* 🟦 DANGER FAIBLE */}
-                <Text
-                  style={{
-                    color: "blue",
-                    fontWeight: "bold",
-                    marginVertical: 5,
-                    alignSelf: "flex-start",
-                  }}
-                >
-                  Danger faible
-                </Text>
+                {/* Ligne pointillée de séparation */}
                 <View
                   style={{
-                    height: 2,
-                    backgroundColor: "blue",
                     width: "100%",
-                    marginBottom: 10,
+                    height: 1,
+                    borderStyle: "dotted",
+                    borderWidth: 1,
+                    borderColor: "#ccc",
+                    marginVertical: 12,
                   }}
                 />
 
+                {/* 🟨 SIGNALLEMENT FAIBLE */}
+                <Text
+                  style={{
+                    color: "#FFCC80",
+                    fontWeight: "bold",
+                    marginBottom: 8,
+                    alignSelf: "flex-start",
+                  }}
+                >
+                  Signalement faible
+                </Text>
+
                 {[
-                  "Animal dangereux",
+                  "Animal sauvage",
                   "Zone mal éclairée",
                   "Route endommagée",
                 ].map((risk, index) => (
                   <TouchableOpacity
                     key={index}
-                    style={styles.menuButton}
+                    style={styles.dangerLowButton}
                     onPress={() => handleSelectRisk(risk)}
                   >
-                    <Text style={styles.menuButtonText}>{risk}</Text>
+                    <Text style={styles.dangerLowText}>{risk}</Text>
                   </TouchableOpacity>
                 ))}
               </ScrollView>
+              
               <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: "#f2f2f2" }]}
+                style={styles.otherButton}
                 onPress={() => {
                   setIsModalVisible(false);
                   setIsCustomRiskModal(true);
                 }}
               >
-                <Text style={styles.modalButtonText}>Autre signalement</Text>
+                <Text style={styles.otherButtonText}>
+                  Autre signalement
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: "#6C5364" }]}
-                onPress={() => setIsModalVisible(false)} //  fermer la modal
+                style={styles.cancelButton}
+                onPress={() => setIsModalVisible(false)}
               >
-                <Text style={[styles.modalButtonText, { color: "#fff" }]}>
-                  Annuler
-                </Text>
+                <Text style={styles.cancelButtonText}>Annuler</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -693,7 +708,7 @@ export default function MapScreen() {
                   fontSize: 15,
                   color: "#2E2633",
                 }}
-                placeholder="Décrivez le signalement... (150 caractères)"
+                placeholder="Décrivez le signalement... (150 caractères max)"
                 placeholderTextColor="#999"
                 maxLength={150}
                 multiline={true}
@@ -714,7 +729,7 @@ export default function MapScreen() {
                     latitude: marker.latitude,
                     longitude: marker.longitude,
                     riskType: customRiskText,
-                    color: "#A66CFF", //  couleur Autre signalement
+                    color: "#9E9E9E", // Autre signalement
                     userId: user.id,
                   };
 
@@ -752,6 +767,7 @@ export default function MapScreen() {
             </View>
           </View>
         </Modal>
+
 
         {/* --- Bouton "+" Menu Principal --- */}
         <TouchableOpacity
@@ -939,5 +955,100 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 10,
     marginVertical: 10,
+  },
+  levelModalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.4)",
+  },
+  levelModal: {
+    width: "70%",
+    backgroundColor: "white",
+    padding: 20,
+    borderRadius: 15,
+    alignItems: "center",
+  },
+  levelCircle: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginHorizontal: 10,
+  },
+  // --- Styles pour les 3 catégories de dangers ---
+  dangerHighButton: {
+    backgroundColor: "#f9f9f9",
+    padding: 8, 
+    borderRadius: 8, 
+    marginVertical: 3, 
+    width: "100%",
+    borderWidth: 0.5, 
+    borderColor: "#E57373", 
+  },
+  dangerHighText: {
+    color: "#333",
+    fontSize: 14, 
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  dangerMediumButton: {
+    backgroundColor: "#f9f9f9", 
+    padding: 8, 
+    borderRadius: 8,
+    marginVertical: 3, 
+    width: "100%",
+    borderWidth: 0.5, 
+    borderColor: "#FFB74D", 
+  },
+  dangerMediumText: {
+    color: "#333",
+    fontSize: 14, 
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  dangerLowButton: {
+    backgroundColor: "#f9f9f9", 
+    padding: 8, 
+    borderRadius: 8, 
+    marginVertical: 3, 
+    width: "100%",
+    borderWidth: 0.5, 
+    borderColor: "#FFCC80", 
+  },
+  dangerLowText: {
+    color: "#333",
+    fontSize: 14, 
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  // --- Styles pour les boutons Autre signalement et Annuler ---
+  otherButton: {
+    backgroundColor: "#f2f2f2",
+    padding: 10, 
+    borderRadius: 8,
+    marginVertical: 4,
+    marginTop: 10,
+    width: "100%",
+    alignItems: "center",
+  },
+  otherButtonText: {
+    color: "#333",
+    fontSize: 15,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  cancelButton: {
+    backgroundColor: "#6C5364", 
+    padding: 10, 
+    borderRadius: 8,
+    marginVertical: 4,
+    width: "100%",
+    alignItems: "center",
+  },
+  cancelButtonText: {
+    color: "#fff",
+    fontSize: 15,
+    fontWeight: "600",
+    textAlign: "center",
   },
 });
