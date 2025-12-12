@@ -16,8 +16,8 @@ import { useNavigation } from "@react-navigation/native";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
 import { Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { utilFetch } from "../utils/function";
 
-const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
 export default function LoginScreen() {
   const navigation = useNavigation();
   const dispatch = useDispatch();
@@ -50,17 +50,8 @@ export default function LoginScreen() {
     (async () => {
       const token = await getData();
       if (!token) return;
-      const response = await fetch(
-        `${BACKEND_URL}/users/auto-signin/${token}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      const data = await response.json();
-
+      const url = `/users/auto-signin/${token}`;
+      const data = await utilFetch(url, "POST");
       if (!data.result) return;
 
       dispatch(addUser(data.user));
@@ -100,16 +91,10 @@ export default function LoginScreen() {
         Alerte("Veuillez saisir une adresse mail valide.");
         return;
       }
-
+      const url = `/users/signin`;
       // Call backend
 
-      const response = await fetch(`${BACKEND_URL}/users/signin`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
+      const data = await utilFetch(url, "POST", { email, password });
 
       if (data.user.token) {
         dispatch(addUser(data.user));
@@ -162,15 +147,8 @@ export default function LoginScreen() {
       }
 
       // Call backend
-
-      const response = await fetch(`${BACKEND_URL}/users/signup`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
+      const url = `/users/signup`;
+      const data = await utilFetch(url, "POST", { email, password });
       if (data.user.token) {
         dispatch(addUser(data.user));
 

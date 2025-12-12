@@ -15,32 +15,24 @@ import { useEffect, useState, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { updateUser, logoutUser } from "../reducers/user";
 import { Alert } from "react-native";
+import { utilFetch } from "../utils/function";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function ProfileScreen({ navigation }) {
   // GLOBALS VARIABLES
 
-  const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL;
   const user = useSelector((state) => state.user.value);
+  const username = user.username;
   const dispatch = useDispatch();
   // GESTION DU USERNAME
 
   const [newUsername, setNewUsername] = useState("");
   const [isChangingUserName, setIsChangingUsername] = useState(false);
-  const username = user.username;
   const saveUsername = async () => {
-    const response = await fetch(
-      `${BACKEND_URL}/users/update?username=${newUsername}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email: user.email }),
-      }
-    );
-    const data = await response.json();
+    const url = `/users/update?username=${newUsername}`;
+
+    const data = await utilFetch(url, "POST", { email: user.email });
     dispatch(updateUser({ username: data.username }));
     setIsChangingUsername(false);
   };
@@ -56,39 +48,21 @@ export default function ProfileScreen({ navigation }) {
   const adresses = user.addresses;
 
   const addAddress = async (newAddress, coords) => {
-    const response = await fetch(
-      `${BACKEND_URL}/users/update?addresses=${newAddress}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: user.email,
-          coords: coords.coordinates,
-        }),
-      }
-    );
-    const data = await response.json();
+    const url = `/users/update?addresses=${newAddress}`;
+    const data = await utilFetch(url, "POST", {
+      email: user.email,
+      coordinates: coords.coordinates,
+    });
+
     dispatch(updateUser({ addresses: data.addresses }));
     setNewAdress("");
     setStreetPropositions([]);
   };
   const removeAdress = async (addressToDelete) => {
-    const response = await fetch(
-      `${BACKEND_URL}/users/update?addresses=${addressToDelete}`,
-      {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email: user.email }),
-      }
-    );
-    const data = await response.json();
+    const url = `/users/update?addresses=${addressToDelete}`;
+    const data = await utilFetch(url, "DELETE", { email: user.email });
     dispatch(updateUser({ addresses: data.addresses }));
   };
-
   const displayedAdresses = adresses.map((adresse, i) => {
     return (
       <View
@@ -224,17 +198,15 @@ export default function ProfileScreen({ navigation }) {
 
   const [eraseAccountModal, setEraseAccountModal] = useState(false);
   const deleteAccount = async () => {
-    const response = await fetch(`${BACKEND_URL}/users/${user.token}`, {
-      method: "DELETE",
-    });
-    const data = await response.json();
+    const url = `/users/${user.token}`;
+    const data = await utilFetch(url, "DELETE");
     if (!data.result) {
       Alerte(
         "Votre compte n'a pas été trouvé et donc n'a pas pu être supprimé"
       );
     }
     setEraseAccountModal(!eraseAccountModal);
-    navigation.navigate("Login");
+    await logout();
   };
 
   return (
