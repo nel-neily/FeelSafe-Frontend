@@ -74,10 +74,11 @@ export default function MapScreen() {
         coordinate={{ latitude: m.latitude, longitude: m.longitude }}
         title={m.riskType}
         onPress={(e) => handleMarkerPress(m)}
-        onDeselect={() => setSelectedMarker(null)}
+        onDeselect={() => {
+          setSelectedMarker(null);
+          setIsMarkerModalVisible(false);
+        }}
       />
-      //   <MaterialIcons name="priority-high" size={50} color={m.color} />
-      // </Marker>
     );
   });
 
