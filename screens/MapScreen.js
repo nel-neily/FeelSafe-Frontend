@@ -44,7 +44,7 @@ export default function MapScreen() {
   const favoriteAddresses = user.addresses || [];
 
   const [selectedMarker, setSelectedMarker] = useState(null);
-
+  const [isMarkerModalVisible, setIsMarkerModalVisible] = useState(false);
   // Modal personnalisé pour le risque 'Autre signalement'
   const [isCustomRiskModal, setIsCustomRiskModal] = useState(false);
   const [customRiskText, setCustomRiskText] = useState("");
@@ -62,6 +62,10 @@ export default function MapScreen() {
     }
   };
 
+  const handleMarkerPress = (marker) => {
+    setSelectedMarker(marker);
+    setIsMarkerModalVisible(true);
+  };
   // Cette variable affiche les markers depuis le store
   const displayMarkersFromDB = markersInStore.map((m) => {
     return (
@@ -69,9 +73,11 @@ export default function MapScreen() {
         key={m._id}
         coordinate={{ latitude: m.latitude, longitude: m.longitude }}
         title={m.riskType}
-        onPress={(e) => setSelectedMarker(m)}
+        onPress={(e) => handleMarkerPress(m)}
         onDeselect={() => setSelectedMarker(null)}
-      ></Marker>
+      />
+      //   <MaterialIcons name="priority-high" size={50} color={m.color} />
+      // </Marker>
     );
   });
 
@@ -194,16 +200,18 @@ export default function MapScreen() {
 
   // Cette fonction supprime un marker et a une vérification => l'id utilisateur est identique à celui ramené par le marker
   // @params: marker(id, color, coordonnées, et la clé étrangère user
-  const handleMarkerPress = async (marker) => {
+  const handleMarkerDelete = async (marker) => {
     if (marker.users._id !== user.id) {
       return alert("Vous ne pouvez pas supprimer ce signalement");
     }
+
     try {
       const url = `/markers/${marker._id}`;
       const data = await utilFetch(url, "DELETE", { userId: user.id });
+
       if (data.result) {
         fetchMarkers(); // Refresh la map
-        setSelectedMarker(null); // ferme le popup
+        setIsMarkerModalVisible(false); // ferme le popup
       }
     } catch (err) {
       console.error("Une erreur s'est produite lors du delete du pin");
@@ -252,6 +260,17 @@ export default function MapScreen() {
     // Autre signalement
     return "#A66CFF";
   };
+  const formatDateTime = (dateString) => {
+    const date = new Date(dateString);
+
+    return date.toLocaleString("fr-FR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
 
   return (
     <SafeAreaProvider>
@@ -285,21 +304,27 @@ export default function MapScreen() {
           )}
         </MapView>
 
-        {selectedMarker && (
-          <Modal
-            animationType="fade"
-            transparent={true}
-            visible={true}
-            onRequestClose={() => setSelectedMarker(null)}
-          >
-            <View style={styles.deleteModalContainer}>
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={isMarkerModalVisible}
+          onRequestClose={() => setIsMarkerModalVisible(false)}
+        >
+          <View style={styles.deleteModalContainer}>
+            {selectedMarker && (
               <View style={styles.deleteModal}>
-                <Text style={styles.modalTitle}>{selectedMarker.riskType}</Text>
-
-                {selectedMarker.users._id === user.id && (
+                <Text style={styles.modalTitle}>
+                  {selectedMarker?.riskType}
+                </Text>
+                <Text
+                  style={{ fontSize: 16, color: "#010101ff", marginBottom: 8 }}
+                >
+                  Signalé le {formatDateTime(selectedMarker?.createdAt)}
+                </Text>
+                {selectedMarker?.users._id === user.id && (
                   <TouchableOpacity
                     style={styles.modalButton}
-                    onPress={() => handleMarkerPress(selectedMarker)}
+                    onPress={() => handleMarkerDelete(selectedMarker)}
                   >
                     <Text style={[styles.modalButtonText, { color: "#fff" }]}>
                       Supprimer
@@ -309,14 +334,14 @@ export default function MapScreen() {
 
                 <TouchableOpacity
                   style={[styles.menuButton]}
-                  onPress={() => setSelectedMarker(null)}
+                  onPress={() => setIsMarkerModalVisible(false)}
                 >
                   <Text style={styles.menuButtonText}>Fermer</Text>
                 </TouchableOpacity>
               </View>
-            </View>
-          </Modal>
-        )}
+            )}
+          </View>
+        </Modal>
 
         {/*  Modal de signalement */}
         <Modal
