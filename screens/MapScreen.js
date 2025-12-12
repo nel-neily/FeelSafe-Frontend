@@ -23,7 +23,9 @@ export default function MapScreen() {
   const [position, setPosition] = useState(null);
   const [marker, setMarker] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [selectedRisk, setSelectedRisk] = useState(null);
+
+  // --- État pour la modale Menu du bouton '+' ---
+  const [isBtnMenuModal, setIsBtnMenuModal] = useState(false);
 
   // --- États pour les destinations ---
   const [isDestinationModal, setIsDestinationModal] = useState(false);
@@ -46,8 +48,10 @@ export default function MapScreen() {
   const favoriteAddresses = user.addresses || [];
 
   const [selectedMarker, setSelectedMarker] = useState(null);
-  const [isLevelModalVisible, setIsLevelModalVisible] = useState(false);
-  const [selectedRiskLevel, setSelectedRiskLevel] = useState(null);
+
+  // Modal personnalisé pour le risque 'Autre signalement'
+  const [isCustomRiskModal, setIsCustomRiskModal] = useState(false);
+  const [customRiskText, setCustomRiskText] = useState("");
 
   const fetchMarkers = async () => {
     fetch(`${BACKEND_URL}/markers`)
@@ -55,7 +59,6 @@ export default function MapScreen() {
       .then((data) => {
         if (data.result) {
           dispatch(importMarkers(data.markers)); // on stocke dans le store
-          // setMarkersFromDB(data.markers); // on stocke dans l'état
         }
       })
       .catch((err) => {
@@ -206,17 +209,20 @@ export default function MapScreen() {
 
   // Fonction sélectionner type de signalement
   const handleSelectRisk = (risk) => {
-    setSelectedRisk(risk); // on enregistre le choix
-    setIsModalVisible(false); //  on ferme la modal
-    setIsLevelModalVisible(true); // on ouvre la modal niveau de risque
+    if (!user.id) return;
 
-    if (!marker) return;
+    const color = getRiskColor(risk);
+
+    const markerCoords = {
+      latitude: position.latitude,
+      longitude: position.longitude,
+    };
 
     const newMarker = {
-      latitude: marker.latitude,
-      longitude: marker.longitude,
+      latitude: marker ? marker.latitude : markerCoords.latitude,
+      longitude: marker ? marker.longitude : markerCoords.longitude,
       riskType: risk,
-      color: "orange", //  temporaire
+      color: color,
       userId: user.id,
     };
     fetch(`${BACKEND_URL}/markers/addmarkers`, {
@@ -227,14 +233,12 @@ export default function MapScreen() {
       .then((res) => res.json())
       .then((data) => {
         if (data.result) {
-          //  rafraîchit la liste des markers dans Redux
           fetchMarkers();
+          setMarker(null);
+          setIsModalVisible(false);
         }
       })
       .catch((err) => console.log("Erreur ajout marker", err));
-
-    // supprime le marker temporaire
-    // setMarker(null);
   };
 
   const handleMarkerPress = (marker) => {
@@ -272,32 +276,34 @@ export default function MapScreen() {
     );
   }
 
-  const handleSelectLevel = (level) => {
-    setSelectedRiskLevel(level);
-    setIsLevelModalVisible(false);
-
-    if (!marker || !user.id) return;
-
-    const newMarker = {
-      latitude: marker.latitude,
-      longitude: marker.longitude,
-      riskType: selectedRisk,
-      color: level === 1 ? "green" : level === 2 ? "orange" : "red",
-      userId: user.id,
-    };
-
-    fetch(`${BACKEND_URL}/markers/addmarkers`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newMarker),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.result) {
-          fetchMarkers();
-        }
-      })
-      .catch((err) => console.log("Erreur ajout marker", err));
+  const getRiskColor = (risk) => {
+    // Danger élevé
+    if (["Agression", "Vol", "Harcèlement", "Incendie"].includes(risk)) {
+      return "#E57373";
+    }
+    // Danger moyen
+    if (
+      [
+        "Comportement suspect",
+        "Bruit suspect",
+        "Dégradation",
+        "Accident",
+      ].includes(risk)
+    ) {
+      return "#FFB74D";
+    }
+    // Danger faible
+    if (
+      [
+        "Animal sauvage",
+        "Zone mal éclairée",
+        "Route endommagée",
+      ].includes(risk)
+    ) {
+      return "#FFEB3B";
+    }
+    // Autre signalement
+    return "#9E9E9E";
   };
 
   return (
@@ -345,74 +351,25 @@ export default function MapScreen() {
 
                 {selectedMarker.users._id === user.id && (
                   <TouchableOpacity
-                    style={styles.deleteButton}
+                    style={styles.modalButton}
                     onPress={() => handleMarkerPress(selectedMarker)}
                   >
-                    <Text style={{ color: "white", fontSize: 18 }}>
-                      {" "}
+                    <Text style={[styles.modalButtonText, { color: "#fff" }]}>
                       Supprimer
                     </Text>
                   </TouchableOpacity>
                 )}
 
                 <TouchableOpacity
-                  style={[styles.modalButton, { backgroundColor: "gray" }]}
+                  style={[styles.menuButton]}
                   onPress={() => setSelectedMarker(null)}
                 >
-                  <Text style={{ color: "white" }}>Fermer</Text>
+                  <Text style={styles.menuButtonText}>Fermer</Text>
                 </TouchableOpacity>
               </View>
             </View>
           </Modal>
         )}
-
-        <Modal
-          transparent={true}
-          animationType="fade"
-          visible={isLevelModalVisible}
-          onRequestClose={() => setIsLevelModalVisible(false)}
-        >
-          <View style={styles.levelModalContainer}>
-            <View style={styles.levelModal}>
-              <Text style={styles.modalTitle}>Niveau de danger</Text>
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-around",
-                  width: "100%",
-                }}
-              >
-                <TouchableOpacity onPress={() => handleSelectLevel(1)}>
-                  <View
-                    style={[styles.levelCircle, { backgroundColor: "green" }]}
-                  />
-                </TouchableOpacity>
-
-                <TouchableOpacity onPress={() => handleSelectLevel(2)}>
-                  <View
-                    style={[styles.levelCircle, { backgroundColor: "orange" }]}
-                  />
-                </TouchableOpacity>
-
-                <TouchableOpacity onPress={() => handleSelectLevel(3)}>
-                  <View
-                    style={[styles.levelCircle, { backgroundColor: "red" }]}
-                  />
-                </TouchableOpacity>
-              </View>
-
-              <TouchableOpacity
-                style={[
-                  styles.modalButton,
-                  { backgroundColor: "#ccc", marginTop: 20 },
-                ]}
-                onPress={() => setIsLevelModalVisible(false)}
-              >
-                <Text style={{ color: "black" }}>Annuler</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
 
         {/*  Modal de signalement */}
         <Modal
@@ -426,37 +383,189 @@ export default function MapScreen() {
               <Text style={styles.modalTitle}>Type de signalement</Text>
 
               <ScrollView
-                style={{ width: "100%", maxHeight: 300 }} // limite la hauteur
+                style={{ width: "100%", maxHeight: 300 }}
                 contentContainerStyle={{ alignItems: "center" }}
               >
+                {/* 🔴 SIGNALLEMENT ÉLEVÉ */}
+                <Text
+                  style={{
+                    color: "#E57373",
+                    fontWeight: "bold",
+                    marginTop: 5,
+                    marginBottom: 8,
+                    alignSelf: "flex-start",
+                  }}
+                >
+                  Signalement élevé
+                </Text>
+
+                {["Agression", "Vol", "Harcèlement", "Incendie"].map(
+                  (risk, index) => (
+                    <TouchableOpacity
+                      key={`high-${index}`}
+                      style={styles.dangerHighButton}
+                      onPress={() => handleSelectRisk(risk)}
+                    >
+                      <Text style={styles.dangerHighText}>{risk}</Text>
+                    </TouchableOpacity>
+                  )
+                )}
+
+                {/* Ligne pointillée de séparation */}
+                <View
+                  style={{
+                    width: "100%",
+                    height: 1,
+                    borderStyle: "dotted",
+                    borderWidth: 1,
+                    borderColor: "#ccc",
+                    marginVertical: 12,
+                  }}
+                />
+
+                {/* 🟧 SIGNALLEMENT MOYEN */}
+                <Text
+                  style={{
+                    color: "#FFB74D",
+                    fontWeight: "bold",
+                    marginBottom: 8,
+                    alignSelf: "flex-start",
+                  }}
+                >
+                  Signalement moyen
+                </Text>
+
                 {[
-                  "Agression",
-                  "Vol",
                   "Comportement suspect",
-                  "Harcelement",
                   "Bruit suspect",
-                  "Zone mal éclairée",
-                  "Accident",
-                  "Incendie",
-                  "Animal dangereux",
                   "Dégradation",
+                  "Accident",
+                ].map((risk, index) => (
+                  <TouchableOpacity
+                    key={`medium-${index}`}
+                    style={styles.dangerMediumButton}
+                    onPress={() => handleSelectRisk(risk)}
+                  >
+                    <Text style={styles.dangerMediumText}>{risk}</Text>
+                  </TouchableOpacity>
+                ))}
+
+                {/* Ligne pointillée de séparation */}
+                <View
+                  style={{
+                    width: "100%",
+                    height: 1,
+                    borderStyle: "dotted",
+                    borderWidth: 1,
+                    borderColor: "#ccc",
+                    marginVertical: 12,
+                  }}
+                />
+
+                {/* 🟨 SIGNALLEMENT FAIBLE */}
+                <Text
+                  style={{
+                    color: "#FFCC80",
+                    fontWeight: "bold",
+                    marginBottom: 8,
+                    alignSelf: "flex-start",
+                  }}
+                >
+                  Signalement faible
+                </Text>
+
+                {[
+                  "Animal sauvage",
+                  "Zone mal éclairée",
                   "Route endommagée",
                 ].map((risk, index) => (
                   <TouchableOpacity
                     key={index}
-                    style={styles.modalButton}
+                    style={styles.dangerLowButton}
                     onPress={() => handleSelectRisk(risk)}
                   >
-                    <Text style={styles.modalButtonText}>{risk}</Text>
+                    <Text style={styles.dangerLowText}>{risk}</Text>
                   </TouchableOpacity>
                 ))}
               </ScrollView>
-
+              
               <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: "#fff" }]}
-                onPress={() => setIsModalVisible(false)} //  fermer la modal
+                style={styles.otherButton}
+                onPress={() => {
+                  setIsModalVisible(false);
+                  setIsCustomRiskModal(true);
+                }}
               >
-                <Text style={styles.modalButtonText}>Annuler</Text>
+                <Text style={styles.otherButtonText}>
+                  Autre signalement
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={() => setIsModalVisible(false)}
+              >
+                <Text style={styles.cancelButtonText}>Annuler</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
+        {/* --- Modale Menu du bouton '+' --- */}
+        <Modal
+          transparent={true}
+          animationType="fade"
+          visible={isBtnMenuModal}
+          onRequestClose={() => setIsBtnMenuModal(false)}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              {/* Bouton Signaler un danger */}
+              <TouchableOpacity
+                style={[styles.menuButton, { marginVertical: 10 }]}
+                onPress={() => {
+                  setIsBtnMenuModal(false);
+                  setIsModalVisible(true);
+                }}
+              >
+                <FontAwesome
+                  name="exclamation-triangle"
+                  size={20}
+                  color="#ec6e5b"
+                  style={{ marginRight: 10 }}
+                />
+                <Text style={styles.menuButtonText}>Signaler un danger</Text>
+              </TouchableOpacity>
+
+              {/* Bouton Ajouter une destination */}
+              <TouchableOpacity
+                style={[styles.menuButton, { marginVertical: 10 }]}
+                onPress={() => {
+                  setIsBtnMenuModal(false);
+                  setIsDestinationModal(true);
+                }}
+              >
+                <FontAwesome
+                  name="map-marker"
+                  size={20}
+                  color="#ec6e5b"
+                  style={{ marginRight: 10 }}
+                />
+                <Text style={styles.menuButtonText}>
+                  Ajouter une destination
+                </Text>
+              </TouchableOpacity>
+
+              {/* Bouton Annuler */}
+              <TouchableOpacity
+                style={[
+                  styles.modalButton,
+                  { backgroundColor: "#6C5364", marginTop: 10 },
+                ]}
+                onPress={() => setIsBtnMenuModal(false)}
+              >
+                <Text style={[styles.modalButtonText, { color: "#fff" }]}>
+                  Annuler
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -575,10 +684,95 @@ export default function MapScreen() {
           </View>
         </Modal>
 
-        {/* --- Bouton Destination "+" --- */}
+        {/* --- Modale pour 'Autre signalement' --- */}
+        <Modal
+          transparent={true}
+          animationType="fade"
+          visible={isCustomRiskModal}
+          onRequestClose={() => setIsCustomRiskModal(false)}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Autre signalement</Text>
+
+              <TextInput
+                style={{
+                  width: "100%",
+                  height: 120,
+                  backgroundColor: "#FFF",
+                  borderRadius: 12,
+                  padding: 12,
+                  borderWidth: 1,
+                  borderColor: "#E28AAE",
+                  textAlignVertical: "top",
+                  fontSize: 15,
+                  color: "#2E2633",
+                }}
+                placeholder="Décrivez le signalement... (150 caractères max)"
+                placeholderTextColor="#999"
+                maxLength={150}
+                multiline={true}
+                value={customRiskText}
+                onChangeText={(value) => setCustomRiskText(value)}
+              />
+
+              <TouchableOpacity
+                style={[styles.modalButton, { marginTop: 20 }]}
+                onPress={() => {
+                  if (customRiskText.trim().length === 0) {
+                    return alert("Votre message est vide.");
+                  }
+
+                  if (!marker || !user.id) return;
+
+                  const newMarker = {
+                    latitude: marker.latitude,
+                    longitude: marker.longitude,
+                    riskType: customRiskText,
+                    color: "#9E9E9E", // Autre signalement
+                    userId: user.id,
+                  };
+
+                  fetch(`${BACKEND_URL}/markers/addmarkers`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(newMarker),
+                  })
+                    .then((res) => res.json())
+                    .then((data) => {
+                      if (data.result) {
+                        fetchMarkers();
+                        setMarker(null);
+                        setCustomRiskText("");
+                        setIsCustomRiskModal(false);
+                      }
+                    })
+                    .catch((err) => console.log("Erreur ajout marker", err));
+                }}
+              >
+                <Text style={[styles.modalButtonText, { color: "#fff" }]}>
+                  Valider
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.modalButton,
+                  { backgroundColor: "#ccc", marginTop: 10 },
+                ]}
+                onPress={() => setIsCustomRiskModal(false)}
+              >
+                <Text style={{ color: "#000" }}>Annuler</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
+
+        {/* --- Bouton "+" Menu Principal --- */}
         <TouchableOpacity
           style={styles.floatingButton}
-          onPress={() => setIsDestinationModal(true)}
+          onPress={() => setIsBtnMenuModal(true)}
         >
           <FontAwesome name="plus" size={30} color="#fff" />
         </TouchableOpacity>
@@ -619,9 +813,29 @@ const styles = StyleSheet.create({
     marginVertical: 5,
     width: "100%",
     alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "center",
   },
   modalButtonText: {
     color: "#000000",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  // --- Styles pour les boutons de la modale menu ---
+  menuButton: {
+    backgroundColor: "#f9f9f9",
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 0.5,
+    borderColor: "#ddd",
+    marginVertical: 5,
+    width: "100%",
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "center",
+  },
+  menuButtonText: {
+    color: "#333",
     fontSize: 16,
     fontWeight: "600",
   },
@@ -760,5 +974,81 @@ const styles = StyleSheet.create({
     height: 50,
     borderRadius: 25,
     marginHorizontal: 10,
+  },
+  // --- Styles pour les 3 catégories de dangers ---
+  dangerHighButton: {
+    backgroundColor: "#f9f9f9",
+    padding: 8, 
+    borderRadius: 8, 
+    marginVertical: 3, 
+    width: "100%",
+    borderWidth: 0.5, 
+    borderColor: "#E57373", 
+  },
+  dangerHighText: {
+    color: "#333",
+    fontSize: 14, 
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  dangerMediumButton: {
+    backgroundColor: "#f9f9f9", 
+    padding: 8, 
+    borderRadius: 8,
+    marginVertical: 3, 
+    width: "100%",
+    borderWidth: 0.5, 
+    borderColor: "#FFB74D", 
+  },
+  dangerMediumText: {
+    color: "#333",
+    fontSize: 14, 
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  dangerLowButton: {
+    backgroundColor: "#f9f9f9", 
+    padding: 8, 
+    borderRadius: 8, 
+    marginVertical: 3, 
+    width: "100%",
+    borderWidth: 0.5, 
+    borderColor: "#FFCC80", 
+  },
+  dangerLowText: {
+    color: "#333",
+    fontSize: 14, 
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  // --- Styles pour les boutons Autre signalement et Annuler ---
+  otherButton: {
+    backgroundColor: "#f2f2f2",
+    padding: 10, 
+    borderRadius: 8,
+    marginVertical: 4,
+    marginTop: 10,
+    width: "100%",
+    alignItems: "center",
+  },
+  otherButtonText: {
+    color: "#333",
+    fontSize: 15,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  cancelButton: {
+    backgroundColor: "#6C5364", 
+    padding: 10, 
+    borderRadius: 8,
+    marginVertical: 4,
+    width: "100%",
+    alignItems: "center",
+  },
+  cancelButtonText: {
+    color: "#fff",
+    fontSize: 15,
+    fontWeight: "600",
+    textAlign: "center",
   },
 });
