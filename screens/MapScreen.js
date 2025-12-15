@@ -17,6 +17,17 @@ import { importMarkers } from "../reducers/markers";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
 import { utilFetch, utilGetFetch } from "../utils/function";
 import AddressSearch from "../components/AdressSearch";
+import * as Notifications from "expo-notifications";
+import { Platform } from "react-native";
+
+//  Configuration des notifications (obligatoire)
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
 
 export default function MapScreen() {
   const [position, setPosition] = useState(null);
@@ -47,6 +58,7 @@ export default function MapScreen() {
   const [isCustomRiskModal, setIsCustomRiskModal] = useState(false);
   const [customRiskText, setCustomRiskText] = useState("");
   const [routeCoords, setRouteCoords] = useState([]); // Itinéraire entre position et destination
+  const [notifiedMarkers, setNotifiedMarkers] = useState([]); // Pour éviter de notifier plusieurs fois le même marker
 
   // Cette fonction fetch les markers en DB et les stock sur redux
   const fetchMarkers = async () => {
@@ -103,9 +115,8 @@ export default function MapScreen() {
         Location.watchPositionAsync(
           { distanceInterval: 20, accuracy: Location.Accuracy.Low },
           (location) => {
-            if (location.coords.speed < 1) {
-              return;
-            }
+            if (!location.coords) return; // évite les crashs Android aléatoires.
+
             setPosition(location.coords);
 
             mapRef.current?.animateToRegion({
@@ -120,6 +131,52 @@ export default function MapScreen() {
     })();
     fetchMarkers(); // récupération au montage
   }, []);
+
+  // Demande la permission d'envoyer des notifications (Android)
+  useEffect(() => {
+    if (Platform.OS === "android") {
+      (async () => {
+        const { status } = await Notifications.requestPermissionsAsync();
+        if (status !== "granted") {
+          console.log("Permission notifications refusée");
+        }
+      })();
+    }
+  }, []);
+
+  //  Déclenche une notification si l'utilisateur est à moins de 100m d’un marker
+  useEffect(() => {
+    if (!position || markersInStore.length === 0) return;
+
+    const newlyNotified = [];
+
+    markersInStore.forEach((marker) => {
+      if (notifiedMarkers.includes(marker._id)) return;
+
+      const distance = getDistanceInMeters(
+        position.latitude,
+        position.longitude,
+        marker.latitude,
+        marker.longitude
+      );
+
+      if (distance <= 100) {
+        Notifications.scheduleNotificationAsync({
+          content: {
+            title: "⚠️ Signalement à proximité",
+            body: `${marker.riskType} signalé à ${Math.round(distance)} m`,
+          },
+          trigger: null,
+        });
+
+        newlyNotified.push(marker._id);
+      }
+    });
+
+    if (newlyNotified.length > 0) {
+      setNotifiedMarkers((prev) => [...prev, ...newlyNotified]);
+    }
+  }, [position, markersInStore]);
 
   // Zoom automatique UNE FOIS QUE la Polyline est réellement rendue
   useEffect(() => {
@@ -158,20 +215,20 @@ export default function MapScreen() {
       });
 
       //  on stocke les coordonnées du trajet + format polyline
-if (data.result && Array.isArray(data.route)) {
-      const formattedRoute = data.route.map((point) => ({
-        latitude: point.latitude,
-        longitude: point.longitude,
-      }));
+      if (data.result && Array.isArray(data.route)) {
+        const formattedRoute = data.route.map((point) => ({
+          latitude: point.latitude,
+          longitude: point.longitude,
+        }));
 
-    setRouteCoords(formattedRoute);
-  }
-} catch (err) {
-  console.error("Erreur itinéraire", err);
-}
+        setRouteCoords(formattedRoute);
+      }
+    } catch (err) {
+      console.error("Erreur itinéraire", err);
+    }
 
-// Fermer la modale
-setIsDestinationModal(false);
+    // Fermer la modale
+    setIsDestinationModal(false);
   };
 
   // Fonction de création marker après un long press
@@ -296,6 +353,23 @@ setIsDestinationModal(false);
       hour: "2-digit",
       minute: "2-digit",
     });
+  };
+
+  // Calcule la distance entre deux points GPS (en mètres)
+  const getDistanceInMeters = (lat1, lon1, lat2, lon2) => {
+    const R = 6371000; // Rayon de la Terre en mètres
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
+
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
   };
 
   return (
