@@ -13,7 +13,11 @@ import { useDispatch, useSelector } from "react-redux";
 import MapView, { Marker, Polyline } from "react-native-maps";
 import * as Location from "expo-location";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
-import { importMarkers } from "../reducers/markers";
+import {
+  importMarkers,
+  updateMarker,
+  updateSelectedMarker,
+} from "../reducers/markers";
 import FontAwesome from "react-native-vector-icons/FontAwesome";
 import { utilFetch, utilGetFetch } from "../utils/function";
 import AddressSearch from "../components/AdressSearch";
@@ -40,8 +44,7 @@ export default function MapScreen() {
 
   // --- Récupération des adresses favorites (vide si pas de compte) ---
   const favoriteAddresses = user.addresses || [];
-
-  const [selectedMarker, setSelectedMarker] = useState(null);
+  const selectedMarker = useSelector((state) => state.marker.selectedMarker);
   const [isMarkerModalVisible, setIsMarkerModalVisible] = useState(false);
   // Modal personnalisé pour le risque 'Autre signalement'
   const [isCustomRiskModal, setIsCustomRiskModal] = useState(false);
@@ -62,7 +65,7 @@ export default function MapScreen() {
   };
 
   const handleMarkerPress = (marker) => {
-    setSelectedMarker(marker);
+    dispatch(updateSelectedMarker(marker));
     setIsMarkerModalVisible(true);
   };
   // Cette variable affiche les markers depuis le store
@@ -75,7 +78,8 @@ export default function MapScreen() {
         pinColor={m.color}
         onPress={(e) => handleMarkerPress(m)}
         onDeselect={() => {
-          setSelectedMarker(null);
+          dispatch(updateSelectedMarker(null));
+
           setIsMarkerModalVisible(false);
         }}
       />
@@ -158,20 +162,20 @@ export default function MapScreen() {
       });
 
       //  on stocke les coordonnées du trajet + format polyline
-if (data.result && Array.isArray(data.route)) {
-      const formattedRoute = data.route.map((point) => ({
-        latitude: point.latitude,
-        longitude: point.longitude,
-      }));
+      if (data.result && Array.isArray(data.route)) {
+        const formattedRoute = data.route.map((point) => ({
+          latitude: point.latitude,
+          longitude: point.longitude,
+        }));
 
-    setRouteCoords(formattedRoute);
-  }
-} catch (err) {
-  console.error("Erreur itinéraire", err);
-}
+        setRouteCoords(formattedRoute);
+      }
+    } catch (err) {
+      console.error("Erreur itinéraire", err);
+    }
 
-// Fermer la modale
-setIsDestinationModal(false);
+    // Fermer la modale
+    setIsDestinationModal(false);
   };
 
   // Fonction de création marker après un long press
@@ -227,7 +231,7 @@ setIsDestinationModal(false);
   // Cette fonction supprime un marker et a une vérification => l'id utilisateur est identique à celui ramené par le marker
   // @params: marker(id, color, coordonnées, et la clé étrangère user
   const handleMarkerDelete = async (marker) => {
-    if (marker.users._id !== user.id) {
+    if (marker.users !== user.id) {
       return alert("Vous ne pouvez pas supprimer ce signalement");
     }
 
@@ -257,7 +261,6 @@ setIsDestinationModal(false);
       />
     );
   }
-
   // Cette fonction permet de retourner une couleur en fonction du params risk que l'on lui passe
   // @params risk: string
   // @return: string
@@ -298,6 +301,12 @@ setIsDestinationModal(false);
     });
   };
 
+  const upvoteMarker = async (selectedMarkerId) => {
+    const url = `/markers/update-upvote/${user.token}`;
+    const data = await utilFetch(url, "POST", { _id: selectedMarkerId });
+    dispatch(updateMarker(data.marker));
+    dispatch(updateSelectedMarker(data.marker));
+  };
   return (
     <SafeAreaProvider>
       <SafeAreaView style={{ flex: 1 }}>
@@ -353,35 +362,42 @@ setIsDestinationModal(false);
           onRequestClose={() => setIsMarkerModalVisible(false)}
         >
           <View style={styles.deleteModalContainer}>
-            {selectedMarker && (
-              <View style={styles.deleteModal}>
-                <Text style={styles.modalTitle}>
-                  {selectedMarker?.riskType}
-                </Text>
-                <Text
-                  style={{ fontSize: 16, color: "#010101ff", marginBottom: 8 }}
-                >
-                  Signalé le {formatDateTime(selectedMarker?.createdAt)}
-                </Text>
-                {selectedMarker?.users._id === user.id && (
-                  <TouchableOpacity
-                    style={styles.modalButton}
-                    onPress={() => handleMarkerDelete(selectedMarker)}
-                  >
-                    <Text style={[styles.modalButtonText, { color: "#fff" }]}>
-                      Supprimer
-                    </Text>
-                  </TouchableOpacity>
-                )}
-
+            <View style={styles.deleteModal}>
+              <Text style={styles.modalTitle}>{selectedMarker?.riskType}</Text>
+              <Text
+                style={{ fontSize: 16, color: "#010101ff", marginBottom: 8 }}
+              >
+                Signalé le {formatDateTime(selectedMarker?.createdAt)}
+              </Text>
+              <Text
+                style={{ fontSize: 16, color: "#010101ff", marginBottom: 8 }}
+              >
+                Signalé {selectedMarker?.upvotes} fois
+              </Text>
+              <TouchableOpacity
+                style={{ backgroundColor: "red", height: 25, width: 50 }}
+                onPress={() => upvoteMarker(selectedMarker._id)}
+              >
+                <Text>upvote</Text>
+              </TouchableOpacity>
+              {selectedMarker?.users === user.id && (
                 <TouchableOpacity
-                  style={[styles.menuButton]}
-                  onPress={() => setIsMarkerModalVisible(false)}
+                  style={styles.modalButton}
+                  onPress={() => handleMarkerDelete(selectedMarker)}
                 >
-                  <Text style={styles.menuButtonText}>Fermer</Text>
+                  <Text style={[styles.modalButtonText, { color: "#fff" }]}>
+                    Supprimer
+                  </Text>
                 </TouchableOpacity>
-              </View>
-            )}
+              )}
+
+              <TouchableOpacity
+                style={[styles.menuButton]}
+                onPress={() => setIsMarkerModalVisible(false)}
+              >
+                <Text style={styles.menuButtonText}>Fermer</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </Modal>
 
@@ -796,52 +812,9 @@ const styles = StyleSheet.create({
     marginTop: 15,
     marginBottom: 10,
   },
-  inputContainer: {
-    width: "100%",
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 10,
-    padding: 12,
-    backgroundColor: "#f9f9f9",
-  },
-  textInput: {
-    flex: 1,
-    marginLeft: 10,
-    fontSize: 15,
-    color: "#333",
-  },
+
   // --- Styles pour les propositions de l'API ---
-  propositionsContainer: {
-    width: "100%",
-    minHeight: 100,
-    maxHeight: 200,
-    marginTop: 10,
-    marginBottom: 10,
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: "#ec6e5b",
-  },
-  propositionItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-    gap: 10,
-  },
-  propositionText: {
-    flex: 1,
-    fontSize: 14,
-    color: "#333",
-  },
-  inputPlaceholder: {
-    marginLeft: 10,
-    color: "#999",
-    fontSize: 15,
-  },
+
   favoritesPlaceholder: {
     width: "100%",
     padding: 20,
