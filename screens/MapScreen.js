@@ -29,7 +29,6 @@ export default function MapScreen() {
 
   // --- États pour les destinations ---
   const [isDestinationModal, setIsDestinationModal] = useState(false);
-  const [destinationInput, setDestinationInput] = useState("");
   const [destinationMarker, setDestinationMarker] = useState(null); // Coordonnées de la destination
 
   const mapRef = useRef(null);
@@ -74,10 +73,11 @@ export default function MapScreen() {
         coordinate={{ latitude: m.latitude, longitude: m.longitude }}
         title={m.riskType}
         onPress={(e) => handleMarkerPress(m)}
-        onDeselect={() => setSelectedMarker(null)}
+        onDeselect={() => {
+          setSelectedMarker(null);
+          setIsMarkerModalVisible(false);
+        }}
       />
-      //   <MaterialIcons name="priority-high" size={50} color={m.color} />
-      // </Marker>
     );
   });
 
@@ -144,7 +144,6 @@ export default function MapScreen() {
     ); // Animation de 1 seconde
 
     // Fermer la modale
-    setDestinationInput("");
     setIsDestinationModal(false);
   };
 
@@ -754,52 +753,9 @@ const styles = StyleSheet.create({
     marginTop: 15,
     marginBottom: 10,
   },
-  inputContainer: {
-    width: "100%",
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 10,
-    padding: 12,
-    backgroundColor: "#f9f9f9",
-  },
-  textInput: {
-    flex: 1,
-    marginLeft: 10,
-    fontSize: 15,
-    color: "#333",
-  },
+
   // --- Styles pour les propositions de l'API ---
-  propositionsContainer: {
-    width: "100%",
-    minHeight: 100,
-    maxHeight: 200,
-    marginTop: 10,
-    marginBottom: 10,
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: "#ec6e5b",
-  },
-  propositionItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-    gap: 10,
-  },
-  propositionText: {
-    flex: 1,
-    fontSize: 14,
-    color: "#333",
-  },
-  inputPlaceholder: {
-    marginLeft: 10,
-    color: "#999",
-    fontSize: 15,
-  },
+
   favoritesPlaceholder: {
     width: "100%",
     padding: 20,

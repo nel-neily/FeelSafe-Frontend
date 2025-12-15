@@ -427,9 +427,4 @@ const styles = StyleSheet.create({
     color: "#4B3A43",
     fontWeight: "600",
   },
-  showHide: {
-    color: "#4B3A43",
-    marginTop: 5,
-    fontWeight: "600",
-  },
 });
