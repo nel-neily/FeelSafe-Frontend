@@ -157,6 +157,8 @@ export default function MapScreen() {
         },
       });
 
+      
+
       //  on stocke les coordonnées du trajet + format polyline
 if (data.result && Array.isArray(data.route)) {
       const formattedRoute = data.route.map((point) => ({
