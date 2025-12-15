@@ -7,11 +7,10 @@ import {
   Modal,
   TouchableOpacity,
   ScrollView,
-  Alert,
   TextInput,
 } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
-import MapView, { Marker } from "react-native-maps";
+import MapView, { Marker, Polyline } from "react-native-maps";
 import * as Location from "expo-location";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { importMarkers } from "../reducers/markers";
@@ -29,7 +28,6 @@ export default function MapScreen() {
 
   // --- États pour les destinations ---
   const [isDestinationModal, setIsDestinationModal] = useState(false);
-  const [destinationInput, setDestinationInput] = useState("");
   const [destinationMarker, setDestinationMarker] = useState(null); // Coordonnées de la destination
 
   const mapRef = useRef(null);
@@ -37,7 +35,7 @@ export default function MapScreen() {
   const markersInStore = useSelector((state) => state.marker.markers);
   const user = useSelector((state) => state.user.value);
 
-  // --- Pour le debounce de Destination ---
+  // --- Redux (markers) ---
   const dispatch = useDispatch();
 
   // --- Récupération des adresses favorites (vide si pas de compte) ---
@@ -48,6 +46,7 @@ export default function MapScreen() {
   // Modal personnalisé pour le risque 'Autre signalement'
   const [isCustomRiskModal, setIsCustomRiskModal] = useState(false);
   const [customRiskText, setCustomRiskText] = useState("");
+  const [routeCoords, setRouteCoords] = useState([]); // Itinéraire entre position et destination
 
   // Cette fonction fetch les markers en DB et les stock sur redux
   const fetchMarkers = async () => {
@@ -73,7 +72,7 @@ export default function MapScreen() {
         key={m._id}
         coordinate={{ latitude: m.latitude, longitude: m.longitude }}
         title={m.riskType}
-        pinColor={m.color} 
+        pinColor={m.color}
         onPress={(e) => handleMarkerPress(m)}
         onDeselect={() => {
           setSelectedMarker(null);
@@ -122,32 +121,57 @@ export default function MapScreen() {
     fetchMarkers(); // récupération au montage
   }, []);
 
-  // --- Fonction pour centrer la carte sur une destination ---
-  const goToDestination = (latitude, longitude) => {
-    if (!latitude || !longitude) {
-      Alert.alert("Erreur", "Coordonnées de la destination introuvables", [
-        { text: "OK" },
-      ]);
-      return;
+  // Zoom automatique UNE FOIS QUE la Polyline est réellement rendue
+  useEffect(() => {
+    if (
+      routeCoords.length >= 2 &&
+      routeCoords.every(
+        (p) =>
+          p && typeof p.latitude === "number" && typeof p.longitude === "number"
+      )
+    ) {
+      mapRef.current?.fitToCoordinates(routeCoords, {
+        edgePadding: { top: 80, right: 80, bottom: 80, left: 80 },
+        animated: true,
+      });
     }
+  }, [routeCoords]);
 
-    // Enregistrer le marqueur de destination
+  // --- Fonction pour centrer la carte sur une destination + calcul itinéraire ---
+  const goToDestination = async (latitude, longitude) => {
+    if (!position) return; // ⭐ sécurité : position actuelle obligatoire
+
+    // ⭐ affiche le marker de destination
     setDestinationMarker({ latitude, longitude });
 
-    // Centrer la carte sur la destination
-    mapRef.current?.animateToRegion(
-      {
-        latitude,
-        longitude,
-        latitudeDelta: 0.01,
-        longitudeDelta: 0.01,
-      },
-      1000
-    ); // Animation de 1 seconde
+    try {
+      //  appel backend pour calculer l’itinéraire
+      const data = await utilFetch("/directions", "POST", {
+        start: {
+          latitude: position.latitude,
+          longitude: position.longitude,
+        },
+        end: {
+          latitude,
+          longitude,
+        },
+      });
 
-    // Fermer la modale
-    setDestinationInput("");
-    setIsDestinationModal(false);
+      //  on stocke les coordonnées du trajet + format polyline
+if (data.result && Array.isArray(data.route)) {
+      const formattedRoute = data.route.map((point) => ({
+        latitude: point.latitude,
+        longitude: point.longitude,
+      }));
+
+    setRouteCoords(formattedRoute);
+  }
+} catch (err) {
+  console.error("Erreur itinéraire", err);
+}
+
+// Fermer la modale
+setIsDestinationModal(false);
   };
 
   // Fonction de création marker après un long press
@@ -292,6 +316,22 @@ export default function MapScreen() {
           onLongPress={handleLongPress}
         >
           {displayMarkersFromDB}
+
+          {/* TRACE L’ITINÉRAIRE UNIQUEMENT SI LES COORDONNÉES SONT VALIDES */}
+          {Array.isArray(routeCoords) &&
+            routeCoords.length >= 2 &&
+            routeCoords.every(
+              (p) =>
+                p &&
+                typeof p.latitude === "number" &&
+                typeof p.longitude === "number"
+            ) && (
+              <Polyline
+                coordinates={routeCoords}
+                strokeWidth={4}
+                strokeColor="#52c7e1ff"
+              />
+            )}
 
           {/* --- Marqueur de destination --- */}
           {destinationMarker && (
