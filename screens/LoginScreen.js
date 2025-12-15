@@ -225,6 +225,7 @@ export default function LoginScreen() {
               onChangeText={(value) => setEmail(value)}
               value={email}
               autoCapitalize="none"
+              keyboardType="email-address"
             />
 
             {/* PASSWORD */}
@@ -281,6 +282,7 @@ export default function LoginScreen() {
               placeholder="Email"
               onChangeText={setEmail}
               autoCapitalize="none"
+              keyboardType="email-address"
             />
 
             {/* PASSWORD */}
@@ -425,11 +427,6 @@ const styles = StyleSheet.create({
   close: {
     marginTop: 15,
     color: "#4B3A43",
-    fontWeight: "600",
-  },
-  showHide: {
-    color: "#4B3A43",
-    marginTop: 5,
     fontWeight: "600",
   },
 });

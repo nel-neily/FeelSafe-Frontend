@@ -321,32 +321,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 5,
   },
-  button: {
-    borderRadius: 10,
-    padding: 10,
-    elevation: 2,
-  },
-  buttonOpen: {
-    backgroundColor: "#F194FF",
-  },
-  buttonClose: {
-    backgroundColor: "#fff",
-  },
-  textStyle: {
-    color: "white",
-    fontWeight: "bold",
-    textAlign: "center",
-  },
-  modalText: {
-    marginBottom: 15,
-    textAlign: "center",
-    backgroundColor: "#fff",
-    height: 50,
-    width: "75%",
-    borderRadius: 10,
-    justifyContent: "center",
-    alignItems: "center",
-  },
+
   // Bouton "Supprimer votre compte"
   button_delete_account: {
     height: 45,
@@ -382,61 +357,7 @@ const styles = StyleSheet.create({
     borderColor: "#ddd",
   },
   // Section adresses
-  addressSection: {
-    flexDirection: "column",
-    gap: 12,
-    width: "100%",
-    marginTop: 20,
-  },
-  sectionTitle: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  addressInputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    width: "100%",
-    borderWidth: 0.5,
-    borderColor: "rgba(255, 255, 255, 0.3)",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    height: 45,
-    backgroundColor: "rgba(255, 255, 255, 0.05)",
-    gap: 10,
-  },
-  addressInput: {
-    flex: 1,
-    color: "#fff",
-    fontSize: 15,
-  },
-  propositionsContainer: {
-    maxHeight: 150,
-    width: "100%",
-    backgroundColor: "#fff",
-    position: "absolute",
-    top: 75,
-    borderRadius: 10,
-    zIndex: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  propositionItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-    gap: 10,
-  },
-  propositionText: {
-    flex: 1,
-    fontSize: 14,
-    color: "#333",
-  },
+
   addressListContainer: {
     width: "100%",
     backgroundColor: "rgba(255, 255, 255, 0.05)",
