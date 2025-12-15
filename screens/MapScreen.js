@@ -72,6 +72,7 @@ export default function MapScreen() {
         key={m._id}
         coordinate={{ latitude: m.latitude, longitude: m.longitude }}
         title={m.riskType}
+        pinColor={m.color} 
         onPress={(e) => handleMarkerPress(m)}
         onDeselect={() => {
           setSelectedMarker(null);
