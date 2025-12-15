@@ -225,6 +225,7 @@ export default function LoginScreen() {
               onChangeText={(value) => setEmail(value)}
               value={email}
               autoCapitalize="none"
+              keyboardType="email-address"
             />
 
             {/* PASSWORD */}
@@ -281,6 +282,7 @@ export default function LoginScreen() {
               placeholder="Email"
               onChangeText={setEmail}
               autoCapitalize="none"
+              keyboardType="email-address"
             />
 
             {/* PASSWORD */}
