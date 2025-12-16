@@ -447,15 +447,18 @@ setIsDestinationModal(false);
               >
                 Signalé {selectedMarker?.upvotes} fois
               </Text>
+              
+              {/* --- Bouton "Signaler aussi"--- */}
               <TouchableOpacity
-                style={{ backgroundColor: "red", height: 25, width: 50 }}
+                style={styles.moiAussiButton}
                 onPress={() => upvoteMarker(selectedMarker._id)}
               >
-                <Text>upvote</Text>
+                <Text style={styles.moiAussiButtonText}>Signaler aussi</Text>
               </TouchableOpacity>
+
               {selectedMarker?.users === user.id && (
                 <TouchableOpacity
-                  style={styles.modalButton}
+                  style={[styles.modalButton, { marginTop: 25 }]}
                   onPress={() => handleMarkerDelete(selectedMarker)}
                 >
                   <Text style={[styles.modalButtonText, { color: "#fff" }]}>
@@ -1025,6 +1028,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   cancelButtonText: {
+    color: "#fff",
+    fontSize: 15,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  // --- Style pour le bouton "Signaler aussi" ---
+  moiAussiButton: {
+    backgroundColor: "#6C5364",
+    padding: 10,
+    borderRadius: 8,
+    marginVertical: 8,
+    width: "80%",
+    alignItems: "center",
+  },
+  moiAussiButtonText: {
     color: "#fff",
     fontSize: 15,
     fontWeight: "600",
