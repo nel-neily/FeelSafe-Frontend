@@ -201,6 +201,7 @@ export default function MapScreen() {
   // --- Fonction pour centrer la carte sur une destination + calcul itinéraire ---
   const goToDestination = async (latitude, longitude) => {
     if (!position) return; // sécurité : position actuelle obligatoire
+    if (!position) return; // sécurité : position actuelle obligatoire
 
     // Affiche le marker de destination
     setDestinationMarker({ latitude, longitude });
@@ -447,15 +448,18 @@ export default function MapScreen() {
               >
                 Signalé {selectedMarker?.upvotes} fois
               </Text>
+              
+              {/* --- Bouton Upvote "Signaler aussi"--- */}
               <TouchableOpacity
-                style={{ backgroundColor: "red", height: 25, width: 50 }}
+                style={styles.signalerAussiButton}
                 onPress={() => upvoteMarker(selectedMarker._id)}
               >
-                <Text>upvote</Text>
+                <Text style={styles.signalerAussiButtonText}>Signaler aussi</Text>
               </TouchableOpacity>
+
               {selectedMarker?.users === user.id && (
                 <TouchableOpacity
-                  style={styles.modalButton}
+                  style={[styles.modalButton, { marginTop: 25 }]}
                   onPress={() => handleMarkerDelete(selectedMarker)}
                 >
                   <Text style={[styles.modalButtonText, { color: "#fff" }]}>
@@ -1025,6 +1029,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   cancelButtonText: {
+    color: "#fff",
+    fontSize: 15,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  // --- Style pour le bouton "Signaler aussi" ---
+  signalerAussiButton: {
+    backgroundColor: "#6C5364",
+    padding: 10,
+    borderRadius: 8,
+    marginVertical: 8,
+    width: "80%",
+    alignItems: "center",
+  },
+  signalerAussiButtonText: {
     color: "#fff",
     fontSize: 15,
     fontWeight: "600",
