@@ -201,37 +201,38 @@ export default function MapScreen() {
   // --- Fonction pour centrer la carte sur une destination + calcul itinéraire ---
   const goToDestination = async (latitude, longitude) => {
     if (!position) return; // sécurité : position actuelle obligatoire
+    if (!position) return; // sécurité : position actuelle obligatoire
 
-// Affiche le marker de destination
-setDestinationMarker({ latitude, longitude });
+    // Affiche le marker de destination
+    setDestinationMarker({ latitude, longitude });
 
-try {
-  // Appel backend pour calculer l’itinéraire
-  const data = await utilFetch("/directions", "POST", {
-    start: {
-      latitude: position.latitude,
-      longitude: position.longitude,
-    },
-    end: {
-      latitude,
-      longitude,
-    },
-  });
+    try {
+      // Appel backend pour calculer l’itinéraire
+      const data = await utilFetch("/directions", "POST", {
+        start: {
+          latitude: position.latitude,
+          longitude: position.longitude,
+        },
+        end: {
+          latitude,
+          longitude,
+        },
+      });
 
-  // On stocke les coordonnées du trajet pour la polyline
-  if (data.result && Array.isArray(data.route)) {
-    const formattedRoute = data.route.map((point) => ({
-      latitude: point.latitude,
-      longitude: point.longitude,
-    }));
-    setRouteCoords(formattedRoute);
-  }
-} catch (err) {
-  console.error("Erreur itinéraire", err);
-}
+      // On stocke les coordonnées du trajet pour la polyline
+      if (data.result && Array.isArray(data.route)) {
+        const formattedRoute = data.route.map((point) => ({
+          latitude: point.latitude,
+          longitude: point.longitude,
+        }));
+        setRouteCoords(formattedRoute);
+      }
+    } catch (err) {
+      console.error("Erreur itinéraire", err);
+    }
 
-// Fermer la modale
-setIsDestinationModal(false);
+    // Fermer la modale
+    setIsDestinationModal(false);
   };
 
   // Fonction de création marker après un long press
