@@ -448,12 +448,12 @@ setIsDestinationModal(false);
                 Signalé {selectedMarker?.upvotes} fois
               </Text>
               
-              {/* --- Bouton "Signaler aussi"--- */}
+              {/* --- Bouton Upvote "Signaler aussi"--- */}
               <TouchableOpacity
-                style={styles.moiAussiButton}
+                style={styles.signalerAussiButton}
                 onPress={() => upvoteMarker(selectedMarker._id)}
               >
-                <Text style={styles.moiAussiButtonText}>Signaler aussi</Text>
+                <Text style={styles.signalerAussiButtonText}>Signaler aussi</Text>
               </TouchableOpacity>
 
               {selectedMarker?.users === user.id && (
@@ -1034,7 +1034,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   // --- Style pour le bouton "Signaler aussi" ---
-  moiAussiButton: {
+  signalerAussiButton: {
     backgroundColor: "#6C5364",
     padding: 10,
     borderRadius: 8,
@@ -1042,7 +1042,7 @@ const styles = StyleSheet.create({
     width: "80%",
     alignItems: "center",
   },
-  moiAussiButtonText: {
+  signalerAussiButtonText: {
     color: "#fff",
     fontSize: 15,
     fontWeight: "600",
