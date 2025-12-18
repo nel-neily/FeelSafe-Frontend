@@ -1,29 +1,46 @@
 {
   "expo": {
-    "name": "frontend",
-    "slug": "frontend",
+    "name": "Feelsafe",
+    "slug": "feelsafe",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/logo-rond.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.guillaumebsorganization.feelsafe",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/logo-rond.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.guillaumebsorganization.feelsafe"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/logo-rond.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "855a119e-2a6f-4fab-83ae-f977dc248640"
+      }
+    },
+    "owner": "guillaumebs-organization",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/855a119e-2a6f-4fab-83ae-f977dc248640"
     }
   }
 }

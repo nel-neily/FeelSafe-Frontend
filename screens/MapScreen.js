@@ -268,7 +268,7 @@ export default function MapScreen() {
       longitude: marker ? marker.longitude : markerCoords.longitude,
       riskType: risk !== "Autre signalement" ? risk : customRiskText,
       color: color,
-      userId: user.id,
+      userId: user.id | null,
     };
     try {
       const url = "/markers/addmarkers";
