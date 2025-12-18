@@ -266,7 +266,7 @@ export default function MapScreen() {
     const newMarker = {
       latitude: marker ? marker.latitude : markerCoords.latitude,
       longitude: marker ? marker.longitude : markerCoords.longitude,
-      riskType: risk,
+      riskType: risk !== "Autre signalement" ? risk : customRiskText,
       color: color,
       userId: user.id,
     };
@@ -448,13 +448,15 @@ export default function MapScreen() {
               >
                 Signalé {selectedMarker?.upvotes} fois
               </Text>
-              
+
               {/* --- Bouton Upvote "Signaler aussi"--- */}
               <TouchableOpacity
                 style={styles.signalerAussiButton}
                 onPress={() => upvoteMarker(selectedMarker._id)}
               >
-                <Text style={styles.signalerAussiButtonText}>Signaler aussi</Text>
+                <Text style={styles.signalerAussiButtonText}>
+                  Signaler aussi
+                </Text>
               </TouchableOpacity>
 
               {selectedMarker?.users === user.id && (
